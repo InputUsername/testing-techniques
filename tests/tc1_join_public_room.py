@@ -21,9 +21,11 @@ def main():
     (access_token_1, _user_id_1) = register("tc1_user1", "privatepassword1A")
     (_access_token_2, user_id_2) = register("tc1_user2", "privatepassword1B")
 
-    room_id = create_room("Public room", False, access_token_1)
+    room_id = create_room("tc1_public_room", False, access_token_1)
 
     assert(invite(access_token_1, user_id_2, room_id) == 200)
+
+    print("Test case 1 successfull")
 
 
 if __name__ == "__main__":

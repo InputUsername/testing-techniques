@@ -89,3 +89,13 @@ def post_request(endpoint, body, access_token=None):
                          json=body
                          )
 
+"""
+Execute a GET request towards the local matrix server with an optional access token.
+"""
+def get_request(endpoint, access_token=None):
+    headers_dict = dict()
+
+    if access_token:
+        headers_dict["Authorization"] = "Bearer " + access_token
+
+    return requests.get("http://localhost:8008" + endpoint, headers=headers_dict)
