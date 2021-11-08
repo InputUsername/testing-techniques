@@ -15,13 +15,13 @@ def login(username, password):
         "password": password
     }
 
-    return post_request("/_matrix/client/r0/login", body).json()['access_token']
+    return post_request("/_matrix/client/r0/login", body).json()["access_token"]
 
 
 """
 5.6.1   POST /_matrix/client/r0/register
 
-Attempts to register a user and returns the access token.
+Attempts to register a user and returns the access token and user id.
 """
 def register(username, password):
 
@@ -51,7 +51,9 @@ def register(username, password):
     # | |_Request_1_________| |
     # |_______________________|
 
-    return post_request("/_matrix/client/r0/register?kind=user", body).json()['access_token']
+    response = post_request("/_matrix/client/r0/register?kind=user", body).json()
+
+    return (response["access_token"], response["user_id"])
 
 
 """
@@ -82,7 +84,7 @@ def post_request(endpoint, body, access_token=None):
     if access_token:
         headers_dict["Authorization"] = "Bearer " + access_token
 
-    return requests.post('http://localhost:8008' + endpoint,
+    return requests.post("http://localhost:8008" + endpoint,
                          headers=headers_dict,
                          json=body
                          )
