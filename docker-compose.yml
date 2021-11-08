@@ -1,0 +1,13 @@
+version: "3.9"
+services:
+  tests:
+    build: .
+    depends_on:
+      - synapse
+  synapse:
+    image: "matrixdotorg/synapse"
+    entrypoint: ["/data/start.sh"]
+    volumes:
+      - ./sdata:/data
+    ports:
+      - "8008:8008"
