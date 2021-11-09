@@ -123,10 +123,6 @@ def register_new_user(user, password, server_location, shared_secret, admin, use
             sys.exit(1)
 
     if admin is None:
-        admin = input("Make admin [no]: ")
-        if admin in ("y", "yes", "true"):
-            admin = True
-        else:
             admin = False
 
     request_registration(
@@ -162,26 +158,8 @@ def main():
         default=None,
         help="User type as specified in synapse.api.constants.UserTypes",
     )
-    admin_group = parser.add_mutually_exclusive_group()
-    admin_group.add_argument(
-        "-a",
-        "--admin",
-        action="store_true",
-        help=(
-            "Register new user as an admin. "
-            "Will prompt if --no-admin is not set either."
-        ),
-    )
-    admin_group.add_argument(
-        "--no-admin",
-        action="store_true",
-        help=(
-            "Register new user as a regular user. "
-            "Will prompt if --admin is not set either."
-        ),
-    )
 
-    group = parser.add_mutually_exclusive_group(required=True)
+    group = parser.add_mutually_exclusive_group()
     group.add_argument(
         "-c",
         "--config",
@@ -212,12 +190,9 @@ def main():
     else:
         secret = args.shared_secret
 
-    admin = None
-    if args.admin or args.no_admin:
-        admin = args.admin
 
     register_new_user(
-        args.user, args.password, args.server_url, secret, admin, args.user_type
+        "marnick2", "marnickssecret123", "http://synapse:8008", "_Z,M0oprHtT+A^e~Z_T5W02p09P5*1c0kBfO^GyHF#38R=ZT-F", None, args.user_type
     )
 
 
