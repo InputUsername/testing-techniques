@@ -1,2 +1,3 @@
 sdata/media_store
 sdata/homeserver.db
+testing/tests/__pycache__
