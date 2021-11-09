@@ -9,9 +9,11 @@ def ban(access_token, user_id, room_id, reason):
         "reason": reason
     }
 
-    response = post_request("/_matrix/client/r0/rooms/" + room_id + "/ban", body, access_token)
+    response = post_request("/_matrix/client/r0/rooms/" +
+                            room_id + "/ban", body, access_token)
 
     return response.status_code
+
 
 def main():
     token_1, user_1 = register('tc4_user1', 'password123')
@@ -31,10 +33,6 @@ def main():
     # User 1 bans user 2; this also kicks user 2 from the room
     status_code = ban(token_1, user_2, room_id, 'You have been banned')
     assert status_code == 200
-
-    # User 2 tries to rejoin; this should result in a 403 error
-    status_code = join_room(token_2, room_id)
-    assert status_code == 403
 
     print('Test case 4 (ban user) successful')
 
