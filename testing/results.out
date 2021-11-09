@@ -1,7 +1,0 @@
-Sending registration request...
-Success!
-Test case 1 (join public room) successfull
-Test case 3 (invite user to private room) successfull
-Test case 4 (ban user) successful
-Test case 8 (guest user can join room) successfull
-Test case 9 (guest user cannot join guest access disabled room) successfull

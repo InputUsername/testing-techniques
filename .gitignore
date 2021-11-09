@@ -1,3 +1,4 @@
 synapse/data/media_store
 synapse/data/homeserver.db
 testing/tests/__pycache__
+testing/results.out
