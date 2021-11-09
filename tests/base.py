@@ -23,7 +23,11 @@ def login(username, password):
 
 Attempts to register a user and returns the access token and user id.
 """
-def register(username, password):
+def register(username, password, is_guest=False):
+    kind = "user"
+
+    if is_guest:
+        kind = "guest"
 
     #  _______________________
     # |       Stage 0         |
@@ -33,7 +37,7 @@ def register(username, password):
     # |_______________________|
 
     session = post_request(
-        "/_matrix/client/r0/register?kind=user", {}).json()["session"]
+        "/_matrix/client/r0/register?kind=" + kind, {}).json()["session"]
 
     body = {
         "auth": {
@@ -74,6 +78,14 @@ def create_room(name, is_private, access_token):
 
     return post_request("/_matrix/client/r0/createRoom", body, access_token).json()["room_id"]
 
+
+"""
+10.4.2.2   POST /_matrix/client/r0/rooms/{roomId}/join
+"""
+def join_room(access_token, room_id):
+    response = post_request("/_matrix/client/r0/rooms/" + room_id + "/join", {}, access_token)
+
+    return response.status_code
 
 """
 Execute a POST request towards the local matrix server with an optional access token.

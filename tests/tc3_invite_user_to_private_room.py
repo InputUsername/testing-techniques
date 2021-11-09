@@ -21,7 +21,7 @@ def main():
     (access_token_2, user_id_2) = register("tc3_user2", "privatepassword1B")
 
     # [Precondition]: create private test room
-    room_id = create_room("tc1_public_room", True, access_token_1)
+    room_id = create_room("tc3_private_room", True, access_token_1)
 
     # Execute the test case and assert the (expected) post condition
     assert(invite(access_token_1, user_id_2, room_id) == 200)

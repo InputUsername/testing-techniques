@@ -1,14 +1,5 @@
 from base import *
 
-"""
-10.4.2.2   POST /_matrix/client/r0/rooms/{roomId}/join
-"""
-def join_room(access_token, room_id):
-    response = post_request("/_matrix/client/r0/rooms/" + room_id + "/join", {}, access_token)
-
-    return response.status_code
-
-
 def main():
     # [Precondition]: create test users 1 and 2
     (access_token_1, _user_id_1) = register("tc1_user1", "privatepassword1A")

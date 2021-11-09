@@ -1,6 +1,5 @@
 from base import *
 
-
 """
 10.4.4.1   POST /_matrix/client/r0/rooms/{roomId}/ban
 """
@@ -13,16 +12,6 @@ def ban(access_token, user_id, room_id, reason):
     response = post_request("/_matrix/client/r0/rooms/" + room_id + "/ban", body, access_token)
 
     return response.status_code
-
-
-"""
-10.4.2.2   POST /_matrix/client/r0/rooms/{roomId}/join
-"""
-def join_room(access_token, room_id):
-    response = post_request("/_matrix/client/r0/rooms/" + room_id + "/join", {}, access_token)
-
-    return response.status_code
-
 
 def main():
     token_1, user_1 = register('tc4_user1', 'password123')
