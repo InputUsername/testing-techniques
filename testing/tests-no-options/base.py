@@ -30,9 +30,7 @@ def register(username, password):
     # |  ___________________  |
     # | |_Request_1_________| | <-- Returns "session" key which is used throughout.
     # |_______________________|
-
-    session = post_request(
-        "/_matrix/client/r0/register?kind=user", {}).json()["session"]
+    session = post_request("/_matrix/client/r0/register?kind=user", {}).json()["session"]
 
     body = {
         "auth": {
@@ -114,7 +112,7 @@ def post_request(endpoint, body, access_token=None):
     if access_token:
         headers_dict["Authorization"] = "Bearer " + access_token
 
-    return requests.post("http://localhost:8008" + endpoint,
+    return requests.post("http://synapse:8008" + endpoint,
                          headers=headers_dict,
                          json=body
                          )
@@ -128,7 +126,7 @@ def put_request(endpoint, body, access_token=None):
     if access_token:
         headers_dict["Authorization"] = "Bearer " + access_token
 
-    return requests.put("http://localhost:8008" + endpoint,
+    return requests.put("http://synapse:8008" + endpoint,
                          headers=headers_dict,
                          json=body
                          )
@@ -142,4 +140,4 @@ def get_request(endpoint, access_token=None):
     if access_token:
         headers_dict["Authorization"] = "Bearer " + access_token
 
-    return requests.get("http://localhost:8008" + endpoint, headers=headers_dict)
+    return requests.get("http://synapse:8008" + endpoint, headers=headers_dict)
