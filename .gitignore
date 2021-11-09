@@ -1,3 +1,3 @@
-sdata/media_store
-sdata/homeserver.db
+synapse/data/media_store
+synapse/data/homeserver.db
 testing/tests/__pycache__
