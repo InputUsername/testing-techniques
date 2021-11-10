@@ -13,3 +13,5 @@ services:
       - ./synapse/data:/data
     ports:
       - "8008:8008"
+    logging:
+      driver: none
