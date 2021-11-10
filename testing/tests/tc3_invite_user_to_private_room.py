@@ -25,6 +25,7 @@ def main():
 
     # Execute the test case and assert the (expected) post condition
     assert(invite(access_token_1, user_id_2, room_id) == 200)
+    assert(join_room(access_token_2, room_id) == 200)
 
     print("Test case 3 (invite user to private room) successfull")
 
