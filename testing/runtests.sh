@@ -4,7 +4,7 @@ echo "runtests.sh"
 
 echo "runtests.sh: Wait for Synapse"
 # Wait untill synapse has fully loaded
-sleep 2
+sleep 5
 
 echo "runtests.sh: Run tests without options"
 # Tests without options

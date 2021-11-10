@@ -26,9 +26,9 @@ def main():
     public_rooms = find_public_rooms(access_token_1, room_name).json()
     
     # Assert the (expected) post condition
-    assert(public_rooms["total_room_count_estimate"] == 0)
+    assert(len(public_rooms["chunk"]) == 0)
 
-    print("Test case 2 successfull")
+    print("Test case 2 (unable to find private room) successfull")
 
 if __name__ == "__main__":
     main()
