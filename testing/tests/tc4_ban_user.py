@@ -16,17 +16,18 @@ def ban(access_token, user_id, room_id, reason):
 
 
 def main():
+    # [Precondition]: create test users 1 and 2
     token_1, user_1 = register('tc4_user1', 'password123')
     token_2, user_2 = register('tc4_user2', 'password321')
 
-    # User 1 and 2 login
+    # [Precondition]: user 1 and 2 login
     token_1 = login('tc4_user1', 'password123')
     token_2 = login('tc4_user2', 'password321')
 
-    # User 1 creates a public room
+    # [Precondition]: user 1 creates a public room
     room_id = create_room('tc4_room', False, token_1)
 
-    # User 2 joins the room
+    # [Precondition]: user 2 joins the room
     status_code = join_room(token_2, room_id)
     assert status_code == 200
 
