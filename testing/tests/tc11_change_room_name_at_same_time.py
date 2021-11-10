@@ -28,7 +28,7 @@ class ChangeRoomTester(threading.Thread):
 
 def main():
     # [Precondition]: create test users 1 and 2
-    (access_token, _user_id) = register("tc11_user6", "privatepassword1A")
+    (access_token, _user_id) = register("tc11_user", "privatepassword1A")
 
     # [Precondition]: create public test room
     room_id = create_room("tc11_public_room", False, access_token)
@@ -48,6 +48,7 @@ def main():
     for t in threads:
         t.join()
 
+    print("Test case 11 (change room name at the same time) successfull")
 
 if __name__ == "__main__":
     main()
