@@ -45,7 +45,6 @@ def main():
     # User 2 checks messages
     res3 = get_request("/_matrix/client/r0/sync", token_2)
     prev_value = json_extract(res3.json(), 'prev_batch')
-    print(prev_value)
 
     # User 1 sends same message twice
     body = {"msgtype": "m.text", "body": "test"}
