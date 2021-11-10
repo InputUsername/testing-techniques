@@ -11,7 +11,7 @@ def main():
     # Execute the test case and assert the (expected) post condition
     assert(join_room(access_token_2, room_id) == 200)
 
-    print("Test case 1 (join public room) successfull")
+    print("Test case 1 (join public room) successful")
 
 if __name__ == "__main__":
     main()

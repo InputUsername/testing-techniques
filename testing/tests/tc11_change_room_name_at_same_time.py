@@ -48,7 +48,7 @@ def main():
     for t in threads:
         t.join()
 
-    print("Test case 11 (change room name at the same time) successfull")
+    print("Test case 11 (change room name at the same time) successful")
 
 if __name__ == "__main__":
     main()

@@ -28,7 +28,7 @@ def main():
     assert(set_guest_access_disabled(access_token_1, room_id) == 200)
     assert(join_room(access_token_2, room_id) == 403)
 
-    print("Test case 9 (guest user cannot join guest access disabled room) successfull")
+    print("Test case 9 (guest user cannot join guest access disabled room) successful")
 
 
 if __name__ == "__main__":

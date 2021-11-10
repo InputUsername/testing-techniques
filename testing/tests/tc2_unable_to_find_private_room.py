@@ -28,7 +28,7 @@ def main():
     # Assert the (expected) post condition
     assert(len(public_rooms["chunk"]) == 0)
 
-    print("Test case 2 (unable to find private room) successfull")
+    print("Test case 2 (unable to find private room) successful")
 
 if __name__ == "__main__":
     main()

@@ -66,7 +66,7 @@ def main():
 
     assert (conflict and no_conflict)
 
-    print("Test case 10 (two identical addresses at the same time) successfull")
+    print("Test case 10 (two identical addresses at the same time) successful")
 
 
 if __name__ == "__main__":

@@ -24,7 +24,7 @@ def main():
     # Execute the test case and assert the (expected) post condition
     assert(change_room_alias(access_token_1, room_id, "SomeInvalidAddress") == 400)
 
-    print("Test case 13 (publish nonexistent local address) successfull")
+    print("Test case 13 (publish nonexistent local address) successful")
 
 
 if __name__ == "__main__":

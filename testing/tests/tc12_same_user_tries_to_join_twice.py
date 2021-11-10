@@ -12,7 +12,7 @@ def main():
     assert(join_room(access_token_2, room_id) == 200)
     assert(join_room(access_token_2, room_id) == 400)
 
-    print("Test case 12 (same user tries to join twice) successfull")
+    print("Test case 12 (same user tries to join twice) successful")
 
 if __name__ == "__main__":
     main()

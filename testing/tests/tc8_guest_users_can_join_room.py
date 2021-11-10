@@ -29,7 +29,7 @@ def main():
     assert(set_guest_access_enabled(access_token_1, room_id) == 200)
     assert(join_room(access_token_2, room_id) == 200)
 
-    print("Test case 8 (guest user can join room) successfull")
+    print("Test case 8 (guest user can join room) successful")
 
 
 if __name__ == "__main__":
