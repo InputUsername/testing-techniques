@@ -1,0 +1,35 @@
+STAUTDEF matrix [ Inp, Outp :: String ] ( )
+::=
+    STATE
+        init, unauthenticated, bearer
+    VAR
+        authentication_type :: String
+    INIT
+        init { authentication_type := "unauthenticated" }
+ENDDEF
+
+CHANDEF Chans
+::=
+    Input :: String ;
+    Output :: String
+ENDDEF
+
+MODELDEF    Matrix
+::=
+    CHAN IN     Input
+    CHAN OUT    Output
+
+    BEHAVIOUR
+        matrix [Input, Output] ()
+ENDDEF
+
+CNECTDEF Sut
+::=
+    CLIENTSOCK
+
+    CHAN OUT    Input   HOST "localhost" PORT 7890
+    ENCODE      Input   ? s -> ! s
+
+    CHAN IN     Output  HOST "localhost" PORT 7890
+    DECODE      Output  ! s <- ? s 
+ENDDEF
