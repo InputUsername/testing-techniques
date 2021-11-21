@@ -1,11 +1,22 @@
 STAUTDEF matrix [ Inp, Outp :: String ] ( )
 ::=
     STATE
-        init, unauthenticated, bearer
+        init, bearer
     VAR
-        authentication_type :: String
+        authentication_type :: String;
+        authentication_token :: String;
+        username :: String;
+        password :: String
     INIT
-        init { authentication_type := "unauthenticated" }
+        init { 
+            authentication_type := "unauthenticated";
+            authentication_token := "";
+            username := "";
+            password := ""
+            }
+
+    TRANS
+        init -> Inp ? req authentication_type [[ req == "register " ]] -> bearer
 ENDDEF
 
 CHANDEF Chans
