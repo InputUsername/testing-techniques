@@ -12,27 +12,29 @@ ENDDEF
 
 TYPEDEF Res ::=
       Ok
+    | Bearer { btoken :: String }
     | Error { code :: Int; err_message :: String } 
 ENDDEF
 
 STAUTDEF matrix [ Inp :: Cmd; Outp :: Res ] ( ) ::=
     STATE
-        init, bearer
+        init, waitbearer, bearer, register
     VAR
         authentication_type :: String;
-        authentication_token :: String;
+        token :: String;
+        res :: Res;
         username :: String;
         password :: String
     INIT
         init { 
             authentication_type := "unauthenticated";
-            authentication_token := "";
+            token := "";
             username := "";
             password := ""
             }
     TRANS
-        init -> Inp ? req [[ isUnauthorized(req) ]] -> bearer
-
+        init -> Inp ? req [[ isUnauthorized(req) ]] -> waitbearer
+        waitbearer -> Outp ! res [[ isBearer(res) ]] { token := btoken(res) } -> bearer
 ENDDEF
 
 CHANDEF Chans
