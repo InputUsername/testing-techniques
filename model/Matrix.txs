@@ -1,5 +1,16 @@
-STAUTDEF matrix [ Inp, Outp :: String ] ( )
-::=
+TYPEDEF AuthorizedCmd ::=
+      Register { rusername, rpassword :: String }
+    | Login { lusername, lpassword :: String }
+    | CreateRoom { cname :: String }
+    | JoinRoom { rname :: String }
+ENDDEF
+
+TYPEDEF Cmd ::=
+      Unauthorized { ucmd :: String }
+    | Authorized { bearer :: String; acmd :: AuthorizedCmd }
+ENDDEF
+
+STAUTDEF matrix [ Inp :: String; Outp :: Cmd ] ( ) ::=
     STATE
         init, bearer
     VAR
@@ -16,7 +27,7 @@ STAUTDEF matrix [ Inp, Outp :: String ] ( )
             }
 
     TRANS
-        init -> Inp ? req authentication_type [[ req == "register " ]] -> bearer
+        init -> Inp ? req [[ isUnauthorized(req) ]] -> bearer
 ENDDEF
 
 CHANDEF Chans
@@ -39,7 +50,7 @@ CNECTDEF Sut
     CLIENTSOCK
 
     CHAN OUT    Input   HOST "localhost" PORT 7890
-    ENCODE      Input   ? s -> ! s
+    ENCODE      Input   ? s -> ! toString(s)
 
     CHAN IN     Output  HOST "localhost" PORT 7890
     DECODE      Output  ! s <- ? s 
