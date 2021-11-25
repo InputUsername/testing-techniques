@@ -10,7 +10,12 @@ TYPEDEF Cmd ::=
     | Authorized { bearer :: String; acmd :: AuthorizedCmd }
 ENDDEF
 
-STAUTDEF matrix [ Inp :: String; Outp :: Cmd ] ( ) ::=
+TYPEDEF Res ::=
+      Ok
+    | Error { code :: Int; err_message :: String } 
+ENDDEF
+
+STAUTDEF matrix [ Inp :: Cmd; Outp :: Res ] ( ) ::=
     STATE
         init, bearer
     VAR
@@ -25,15 +30,15 @@ STAUTDEF matrix [ Inp :: String; Outp :: Cmd ] ( ) ::=
             username := "";
             password := ""
             }
-
     TRANS
         init -> Inp ? req [[ isUnauthorized(req) ]] -> bearer
+
 ENDDEF
 
 CHANDEF Chans
 ::=
-    Input :: String ;
-    Output :: String
+    Input :: Cmd ;
+    Output :: Res
 ENDDEF
 
 MODELDEF    Matrix
@@ -53,5 +58,5 @@ CNECTDEF Sut
     ENCODE      Input   ? s -> ! toString(s)
 
     CHAN IN     Output  HOST "localhost" PORT 7890
-    DECODE      Output  ! s <- ? s 
+    DECODE      Output  ! fromString(s) <- ? s 
 ENDDEF
