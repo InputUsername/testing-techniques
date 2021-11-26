@@ -16,7 +16,7 @@ TYPEDEF Res ::=
     | Error { code :: Int; err_message :: String } 
 ENDDEF
 
-STAUTDEF matrix [ Inp :: Cmd; Outp :: Res ] ( ) ::=
+STAUTDEF matrixstaut [ Inp :: Cmd; Outp :: Res ] ( ) ::=
     STATE
         init, waitbearer, bearer, register
     VAR
@@ -37,6 +37,13 @@ STAUTDEF matrix [ Inp :: Cmd; Outp :: Res ] ( ) ::=
         waitbearer -> Outp ! res [[ isBearer(res) ]] { token := btoken(res) } -> bearer
 ENDDEF
 
+PROCDEF Authenticate [ Inp :: Cmd; Outp :: Bearer ]  () ::=
+    Inp ?cmd [[IF is]]
+
+ENDDEF
+
+
+
 CHANDEF Chans
 ::=
     Input :: Cmd ;
@@ -49,7 +56,7 @@ MODELDEF    Matrix
     CHAN OUT    Output
 
     BEHAVIOUR
-        matrix [Input, Output] ()
+        matrixstaut [Input, Output] ()
 ENDDEF
 
 CNECTDEF Sut
