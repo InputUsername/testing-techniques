@@ -1,0 +1,55 @@
+-- ----------------------------------------------------------------------------------------- --
+-- QueueOp :  operations on a queue
+--     constructors:
+--       Enq(val)   :  Enqueue integer val
+--       Deq        :  request to Dequeue the next value
+--     generated standard functions:
+--       isEnq(qop) :  check if queue operator qop matches Enq(v)
+--       isDeq(qop) :  check if queue operator qop matches Deq
+--       val(qop)   :  the value of queue operator qop, if isEnq(qop)
+
+TYPEDEF  MatrixOp   ::=  CreateRoom  { roomname :: String }
+                       | CreateUser { username :: String; password :: String}
+ENDDEF
+
+
+STAUTDEF  matrix [ Inp :: MatrixOp; Outp :: String ] ( )
+ ::=
+    STATE
+        init, noname, named
+    VAR
+        name :: String
+    INIT
+        init { name := "" }
+    TRANS
+        init  ->  Inp ? n [[ isCreateRoom(n) /\ strinre(roomname(n), REGEX('[A-Z][a-z]+')) ]] { name := roomname(n) }      ->  named
+        init  ->  Inp ? n [[ isCreateUser(n) /\ strinre(username(n), REGEX('[A-Z][a-z]+')) /\ strinre(password(n), REGEX('[A-Z][a-z]+')) ]] { name := username(n) }      ->  named
+        named   ->  Outp ! "test"                                  ->  init
+ENDDEF
+
+CHANDEF  Chans
+ ::=
+      Input  :: MatrixOp ;
+      Output :: String
+ENDDEF
+
+MODELDEF  Matrix
+ ::=
+      CHAN IN   Input
+      CHAN OUT  Output
+ 
+      BEHAVIOUR  
+                matrix [Input, Output] ()
+ENDDEF
+
+CNECTDEF  Sut
+ ::=
+     CLIENTSOCK
+
+     CHAN OUT  Input   HOST "localhost" PORT 7890
+     ENCODE    Input   ? s  ->  ! toString(s)
+
+     CHAN IN   Output  HOST "localhost" PORT 7890
+     DECODE    Output  ! fromString(s)  <-  ? s
+ENDDEF
+
