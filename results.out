@@ -1,0 +1,18 @@
+Test case 10 (two identical addresses at the same time) successful
+Test case 11 (change room name at the same time) successful
+Traceback (most recent call last):
+  File "/app/tests/tc12_same_user_tries_to_join_twice.py", line 18, in <module>
+    main()
+  File "/app/tests/tc12_same_user_tries_to_join_twice.py", line 13, in main
+    assert(join_room(access_token_2, room_id) == 400)
+AssertionError
+Test case 13 (publish nonexistent local address) successful
+Test case 1 (join public room) successful
+Test case 2 (unable to find private room) successful
+Test case 3 (invite user to private room) successful
+Test case 4 (ban user) successful
+Test case 5 (banned user cannot join room) successful
+Test case 6 (kicked user can rejoin room) successful
+Test case 7 (double messages) successful
+Test case 8 (guest user can join room) successful
+Test case 9 (guest user cannot join guest access disabled room) successful

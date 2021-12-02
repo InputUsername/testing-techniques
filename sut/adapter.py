@@ -2,6 +2,7 @@
 
 import socket
 import re
+from base import *
 
 HOST = '127.0.0.1'  # Standard loopback interface address (localhost)
 PORT = 7890        # Port to listen on (non-privileged ports are > 1023)
@@ -17,8 +18,16 @@ def parse_request(decoded_str: str) -> str:
     match_func = re.match(r'(\w+)\(.*\)', decoded_str)
     function_name = match_func.group(1)
     print(function_name)
-    match_args = re.findall(r'(?<=")(\w*|\d*)(?=")  ', decoded_str)
+    match_args = re.findall(r'(?<=")((?:\w|\d)+)(?=")', decoded_str)
     print(match_args)
+
+    match function_name:
+        case "CreateUser":
+            print("found createuser command")
+            register(match_args[0], match_args[1])
+
+
+
     # match decoded_str:
     #     case 
 
