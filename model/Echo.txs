@@ -8,23 +8,32 @@
 --       isDeq(qop) :  check if queue operator qop matches Deq
 --       val(qop)   :  the value of queue operator qop, if isEnq(qop)
 
-TYPEDEF  MatrixOp   ::=  CreateRoom  { roomname :: String }
-                       | CreateUser { username :: String; password :: String}
+TYPEDEF  MatrixOp   ::=  CreateRoom  { roomname :: String; is_private :: Bool; access_token :: String}
+                       | CreateUser { usernameCreateUser :: String; passwordCreateUser :: String}
+                       | LoginUser { usernameLoginUser :: String; passwordLoginUser :: String}
 ENDDEF
 
+TYPEDEF ResponseOp  ::=  Str  { strr :: String }
+ENDDEF
 
 STAUTDEF  matrix [ Inp :: MatrixOp; Outp :: String ] ( )
  ::=
     STATE
-        init, noname, named
+        init, noname, named, createdUser1, createUser2, createdUser2, start, createdRoom, loginUser1, loggedInUser1
     VAR
-        name :: String
+        username1, username2, password1, password2, access_token1, access_token2 :: String
     INIT
-        init { name := "" }
+        init { access_token1 := ""; access_token2 := ""}
     TRANS
-        init  ->  Inp ? n [[ isCreateRoom(n) /\ strinre(roomname(n), REGEX('[A-Z][a-z]+')) ]] { name := roomname(n) }      ->  named
-        init  ->  Inp ? n [[ isCreateUser(n) /\ strinre(username(n), REGEX('[A-Z][a-z]+')) /\ strinre(password(n), REGEX('[A-Z][a-z]+')) ]] { name := username(n) }      ->  named
-        named   ->  Outp ! "test"                                  ->  init
+    -- Create and login user1, save access token in var
+        init            ->  Inp  ? n [[ IF isCreateUser(n) THEN strinre(usernameCreateUser(n), REGEX('[A-Z][a-z]+')) /\ strinre(passwordCreateUser(n), REGEX('[A-Z][a-z]+')) ELSE False FI ]] { username1 := usernameCreateUser(n); password1 := passwordCreateUser(n) }    ->  createdUser1
+        createdUser1    ->  Outp ? o                                                                                                                                                                                                ->  loginUser1
+        loginUser1      ->  Inp  ? n [[ IF isLoginUser(n) THEN (usernameLoginUser(n) == username1) /\ (passwordLoginUser(n) == password1) ELSE False FI]]                                                                           ->  loggedInUser1
+        loggedInUser1   ->  Outp ? o {access_token1 := o}                                                                                                                                                                           ->  start
+        -- createUser2     ->  Inp  ? n [[ IF isCreateUser(n) THEN strinre(username(n), REGEX('[A-Z][a-z]+')) /\ strinre(password(n), REGEX('[A-Z][a-z]+')) ELSE False FI ]] { username2 := username(n); password2 := password(n) } ->  createdUser2
+        -- createdUser2    ->  Outp ? output  {access_token2 := output}                                                                                                                                                             ->  start
+        start           ->  Inp  ? n [[ IF isCreateRoom(n) THEN strinre(roomname(n), REGEX('[A-Z][a-z]+')) /\ (access_token(n) == access_token1) ELSE False FI ]] {  }                                                              ->  createdRoom
+        createdRoom     ->  Outp ? o                                                                                                                                                                                           ->  start
 ENDDEF
 
 CHANDEF  Chans

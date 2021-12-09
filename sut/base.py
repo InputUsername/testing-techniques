@@ -1,4 +1,8 @@
 import requests
+from requests.models import Response
+
+url = "http://localhost:8008"
+# url = "http://synapse:8008"
 
 """
 5.5.2   POST /_matrix/client/r0/login
@@ -59,7 +63,7 @@ def register(username, password):
 
 Attempts to register a guest user and returns the access token and user id.
 """
-def register_guest(username, password):
+def register_guest(username: str, password: str):
     body = {
         "auth": {
             "type": "m.login.dummy"
@@ -68,7 +72,7 @@ def register_guest(username, password):
         "password": password
     }
 
-    response = post_request(
+    response: Response = post_request(
         "/_matrix/client/r0/register?kind=guest", body).json()
 
     return (response["access_token"], response["user_id"])
@@ -79,7 +83,7 @@ def register_guest(username, password):
 
 Attempts to create a room and returns the room id.
 """
-def create_room(name, is_private, access_token):
+def create_room(name: str, is_private: bool, access_token: str) -> Response:
     visibility = "public"
 
     if is_private:
@@ -89,14 +93,15 @@ def create_room(name, is_private, access_token):
         "visibility": visibility,
         "name": name
     }
-
-    return post_request("/_matrix/client/r0/createRoom", body, access_token).json()["room_id"]
+    res = post_request("/_matrix/client/r0/createRoom", body, access_token).json()
+    print(res)
+    return res["room_id"]
 
 
 """
 10.4.2.2   POST /_matrix/client/r0/rooms/{roomId}/join
 """
-def join_room(access_token, room_id):
+def join_room(access_token: str, room_id: str) -> int:
     response = post_request("/_matrix/client/r0/rooms/" +
                             room_id + "/join", {}, access_token)
 
@@ -106,13 +111,13 @@ def join_room(access_token, room_id):
 """
 Execute a POST request towards the local matrix server with an optional access token.
 """
-def post_request(endpoint, body, access_token=None):
+def post_request(endpoint: str, body: str, access_token: str = None) -> Response:
     headers_dict = dict()
 
     if access_token:
         headers_dict["Authorization"] = "Bearer " + access_token
 
-    return requests.post("http://synapse:8008" + endpoint,
+    return requests.post(url + endpoint,
                          headers=headers_dict,
                          json=body
                          )
@@ -120,13 +125,13 @@ def post_request(endpoint, body, access_token=None):
 """
 Execute a PUT request towards the local matrix server with an optional access token.
 """
-def put_request(endpoint, body, access_token=None):
+def put_request(endpoint: str, body: str, access_token: str = None) -> Response:
     headers_dict = dict()
 
     if access_token:
         headers_dict["Authorization"] = "Bearer " + access_token
 
-    return requests.put("http://synapse:8008" + endpoint,
+    return requests.put(url + endpoint,
                          headers=headers_dict,
                          json=body
                          )
@@ -134,10 +139,10 @@ def put_request(endpoint, body, access_token=None):
 """
 Execute a GET request towards the local matrix server with an optional access token.
 """
-def get_request(endpoint, access_token=None):
+def get_request(endpoint: str, access_token: str = None) -> Response:
     headers_dict = dict()
 
     if access_token:
         headers_dict["Authorization"] = "Bearer " + access_token
 
-    return requests.get("http://synapse:8008" + endpoint, headers=headers_dict)
+    return requests.get(url + endpoint, headers=headers_dict)
