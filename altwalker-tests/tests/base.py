@@ -104,33 +104,23 @@ def join_room(access_token, room_id):
 
 
 """
-10.4.3.3   POST /_matrix/client/r0/rooms/{roomId}/kick
+5.6.8   GET /_matrix/client/r0/register/available
 """
-def kick(access_token, room_id, user_id, reason):
-    body = {
-        "user_id": user_id,
-        "reason": reason
-    }
+def available(username):
+    response = get_request(
+        "/_matrix/client/r0/register/available?username=" + username)
 
-    response = post_request("/_matrix/client/r0/rooms/" +
-                            room_id + "/kick", body, access_token)
-
-    return response.status_code
+    if response.status_code == 200:
+        return response.json()["available"]
+    else:
+        return False
 
 
 """
-10.4.4.1   POST /_matrix/client/r0/rooms/{roomId}/ban
+5.8.1   GET /_matrix/client/r0/account/whoami
 """
-def ban(access_token, user_id, room_id, reason):
-    body = {
-        "user_id": user_id,
-        "reason": reason
-    }
-
-    response = post_request("/_matrix/client/r0/rooms/" +
-                            room_id + "/ban", body, access_token)
-
-    return response.status_code
+def whoami(access_token):
+    return get_request("/_matrix/client/r0/account/whoami", access_token)
 
 
 """
@@ -147,6 +137,7 @@ def post_request(endpoint, body, access_token=None):
                          json=body
                          )
 
+
 """
 Execute a PUT request towards the local matrix server with an optional access token.
 """
@@ -157,9 +148,10 @@ def put_request(endpoint, body, access_token=None):
         headers_dict["Authorization"] = "Bearer " + access_token
 
     return requests.put("http://127.0.0.1:8008" + endpoint,
-                         headers=headers_dict,
-                         json=body
-                         )
+                        headers=headers_dict,
+                        json=body
+                        )
+
 
 """
 Execute a GET request towards the local matrix server with an optional access token.
