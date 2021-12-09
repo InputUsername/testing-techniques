@@ -19,7 +19,7 @@ ENDDEF
 STAUTDEF  matrix [ Inp :: MatrixOp; Outp :: String ] ( )
  ::=
     STATE
-        init, noname, named, createdUser1, createUser2, createdUser2, start, createdRoom, loginUser1, loggedInUser1
+        init, noname, named, createdUser1, createUser2, createdUser2, start, createdRoom, loginUser1, loggedInUser1, loginUser2, loggedInUser2
     VAR
         username1, username2, password1, password2, access_token1, access_token2 :: String
     INIT
@@ -29,10 +29,13 @@ STAUTDEF  matrix [ Inp :: MatrixOp; Outp :: String ] ( )
         init            ->  Inp  ? n [[ IF isCreateUser(n) THEN strinre(usernameCreateUser(n), REGEX('[A-Z][a-z]+')) /\ strinre(passwordCreateUser(n), REGEX('[A-Z][a-z]+')) ELSE False FI ]] { username1 := usernameCreateUser(n); password1 := passwordCreateUser(n) }    ->  createdUser1
         createdUser1    ->  Outp ? o                                                                                                                                                                                                ->  loginUser1
         loginUser1      ->  Inp  ? n [[ IF isLoginUser(n) THEN (usernameLoginUser(n) == username1) /\ (passwordLoginUser(n) == password1) ELSE False FI]]                                                                           ->  loggedInUser1
-        loggedInUser1   ->  Outp ? o {access_token1 := o}                                                                                                                                                                           ->  start
-        -- createUser2     ->  Inp  ? n [[ IF isCreateUser(n) THEN strinre(username(n), REGEX('[A-Z][a-z]+')) /\ strinre(password(n), REGEX('[A-Z][a-z]+')) ELSE False FI ]] { username2 := username(n); password2 := password(n) } ->  createdUser2
-        -- createdUser2    ->  Outp ? output  {access_token2 := output}                                                                                                                                                             ->  start
+        loggedInUser1   ->  Outp ? o {access_token1 := o}                                                                                                                                                                           ->  createUser2
+        createUser2     ->  Inp  ? n [[ IF isCreateUser(n) THEN strinre(usernameCreateUser(n), REGEX('[A-Z][a-z]+')) /\ strinre(passwordCreateUser(n), REGEX('[A-Z][a-z]+')) ELSE False FI ]] { username2 := usernameCreateUser(n); password2 := passwordCreateUser(n) }    ->  createdUser2
+        createdUser2    ->  Outp ? o                                                                                                                                                                                                ->  loginUser2
+        loginUser2      ->  Inp  ? n [[ IF isLoginUser(n) THEN (usernameLoginUser(n) == username2) /\ (passwordLoginUser(n) == password2) ELSE False FI]]                                                                           ->  loggedInUser2
+        loggedInUser2   ->  Outp ? o {access_token2 := o}                                                                                                                                                                           ->  start
         start           ->  Inp  ? n [[ IF isCreateRoom(n) THEN strinre(roomname(n), REGEX('[A-Z][a-z]+')) /\ (access_token(n) == access_token1) ELSE False FI ]] {  }                                                              ->  createdRoom
+        start           ->  Inp  ? n [[ IF isCreateRoom(n) THEN strinre(roomname(n), REGEX('[A-Z][a-z]+')) /\ (access_token(n) == access_token2) ELSE False FI ]] {  }                                                              ->  createdRoom
         createdRoom     ->  Outp ? o                                                                                                                                                                                           ->  start
 ENDDEF
 

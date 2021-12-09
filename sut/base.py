@@ -94,7 +94,6 @@ def create_room(name: str, is_private: bool, access_token: str) -> Response:
         "name": name
     }
     res = post_request("/_matrix/client/r0/createRoom", body, access_token).json()
-    print(res)
     return res["room_id"]
 
 
