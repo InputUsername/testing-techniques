@@ -11,11 +11,12 @@ class User:
     id: str
 
 
-# @dataclass
-# class Room:
-#     name: str
-#     is_private: bool
-#     id: str
+@dataclass
+class Room:
+    creator: str
+    name: str
+    is_private: bool
+    id: str
 
 
 class UserAndRoomManagement:
@@ -26,6 +27,9 @@ class UserAndRoomManagement:
         self.logged_in = dict()
         data['users_logged_in'] = 0
 
+        self.rooms = dict()
+        data['rooms'] = 0
+
     def tearDownModel(self, data):
         print(self.users)
         print(self.logged_in)
@@ -35,7 +39,7 @@ class UserAndRoomManagement:
         pass
 
     def e_register(self, data):
-        username = 'altwalker_' + str(random.randint(0, 999_999_999))
+        username = 'altwalker_user_' + str(random.randint(0, 999_999_999))
         password = 'password123'
 
         registration_access_token, user_id = register(username, password)
@@ -73,3 +77,22 @@ class UserAndRoomManagement:
             response = whoami(user.access_token)
             assert response.status_code == 200
             assert response.json()["user_id"] == user.id
+
+    def e_create_room(self, data):
+        room_name = 'altwalker_room_' + str(random.randint(0, 999_999_999))
+        is_private = bool(random.getrandbits(1))
+        user = random.choice(list(self.logged_in.values()))
+
+        room_id = create_room(room_name, is_private, user.access_token)
+
+        self.rooms[room_name] = Room(user.username, room_name, is_private, room_id)
+        data['rooms'] = int(data['rooms']) + 1
+
+    def v_room_created(self, data):
+        assert int(data['rooms']) != 0
+
+        for _room_name, room in self.rooms.items():
+            response = list_room(room.id)
+            assert response.status_code == 200
+            is_private = response.json()['visibility'] == 'private'
+            assert is_private == room.is_private

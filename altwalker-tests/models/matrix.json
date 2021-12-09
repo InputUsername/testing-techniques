@@ -17,6 +17,10 @@
 				{
 					"id": "v2",
 					"name": "v_logged_in"
+				},
+				{
+					"id": "v3",
+					"name": "v_room_created"
 				}
 			],
 			"edges": [
@@ -55,6 +59,30 @@
 					"name": "e_register",
 					"sourceVertexId": "v2",
 					"targetVertexId": "v1"
+				},
+				{
+					"id": "e7",
+					"name": "e_create_room",
+					"sourceVertexId": "v2",
+					"targetVertexId": "v3"
+				},
+				{
+					"id": "e8",
+					"name": "e_create_room",
+					"sourceVertexId": "v3",
+					"targetVertexId": "v3"
+				},
+				{
+					"id": "e9",
+					"name": "e_register",
+					"sourceVertexId": "v3",
+					"targetVertexId": "v1"
+				},
+				{
+					"id": "e10",
+					"name": "e_login",
+					"sourceVertexId": "v3",
+					"targetVertexId": "v2"
 				}
 			]
 		}

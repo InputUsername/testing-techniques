@@ -124,6 +124,13 @@ def whoami(access_token):
 
 
 """
+10.5.1   GET /_matrix/client/r0/directory/list/room/{roomId}
+"""
+def list_room(room_id):
+    return get_request("/_matrix/client/r0/directory/list/room/" + room_id)
+
+
+"""
 Execute a POST request towards the local matrix server with an optional access token.
 """
 def post_request(endpoint, body, access_token=None):
