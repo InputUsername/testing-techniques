@@ -18,7 +18,7 @@ def to_bool(bl: bool):
     return bl == 'True'
 
 def parse_request(decoded_str: str) -> str:
-    match_args = re.findall(r'((?:\w|\d)+)', decoded_str)
+    match_args = re.findall(r'((?:[^(",)])+)', decoded_str)
     function_name = match_args[0]
 
     match function_name:
@@ -34,10 +34,10 @@ def parse_request(decoded_str: str) -> str:
             room_id = create_room(match_args[1], to_bool(match_args[2]), match_args[3])
             return room_id
 
-
-
-    # match decoded_str:
-    #     case 
+        case "JoinRoom":
+            room_id = join_room(match_args[1], match_args[2])
+            str_room_id = str(room_id)
+            return str_room_id
 
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:

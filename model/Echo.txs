@@ -8,9 +8,11 @@
 --       isDeq(qop) :  check if queue operator qop matches Deq
 --       val(qop)   :  the value of queue operator qop, if isEnq(qop)
 
-TYPEDEF  MatrixOp   ::=  CreateRoom  { roomname :: String; is_private :: Bool; access_token :: String}
-                       | CreateUser { usernameCreateUser :: String; passwordCreateUser :: String}
-                       | LoginUser { usernameLoginUser :: String; passwordLoginUser :: String}
+TYPEDEF  MatrixOp   ::=  CreateRoom     { roomnameCreateRoom :: String;     isPrivateCreateRoom :: Bool;    accessTokenCreateRoom :: String }
+                       | CreateUser     { usernameCreateUser :: String;     passwordCreateUser :: String    }
+                       | LoginUser      { usernameLoginUser :: String;      passwordLoginUser :: String     }
+                       | JoinRoom       { accessTokenJoinRoom :: String;    roomIdJoinRoom :: String        }
+
 ENDDEF
 
 TYPEDEF ResponseOp  ::=  Str  { strr :: String }
@@ -19,24 +21,40 @@ ENDDEF
 STAUTDEF  matrix [ Inp :: MatrixOp; Outp :: String ] ( )
  ::=
     STATE
-        init, noname, named, createdUser1, createUser2, createdUser2, start, createdRoom, loginUser1, loggedInUser1, loginUser2, loggedInUser2
+        init, noname, named, createdUser1, createUser2, createdUser2, start, createdRoom, loginUser1, loggedInUser1, loginUser2, loggedInUser2, end, createRoom, createdRoom, joinRoomUser1, joinedRoomUser1, joinRoomUser2, joinedRoomUser2
     VAR
-        username1, username2, password1, password2, access_token1, access_token2 :: String
+        username1, username2, password1, password2, accessToken1, accessToken2, roomId :: String
     INIT
-        init { access_token1 := ""; access_token2 := ""}
+        init { accessToken1 := ""; accessToken2 := ""}
     TRANS
-    -- Create and login user1, save access token in var
+        -- Create and login user1, save access token in var
         init            ->  Inp  ? n [[ IF isCreateUser(n) THEN strinre(usernameCreateUser(n), REGEX('[A-Z][a-z]+')) /\ strinre(passwordCreateUser(n), REGEX('[A-Z][a-z]+')) ELSE False FI ]] { username1 := usernameCreateUser(n); password1 := passwordCreateUser(n) }    ->  createdUser1
-        createdUser1    ->  Outp ? o                                                                                                                                                                                                ->  loginUser1
-        loginUser1      ->  Inp  ? n [[ IF isLoginUser(n) THEN (usernameLoginUser(n) == username1) /\ (passwordLoginUser(n) == password1) ELSE False FI]]                                                                           ->  loggedInUser1
-        loggedInUser1   ->  Outp ? o {access_token1 := o}                                                                                                                                                                           ->  createUser2
+        createdUser1    ->  Outp ? o                                                                                                                                                                                                                                        ->  loginUser1
+        loginUser1      ->  Inp  ? n [[ IF isLoginUser(n) THEN (usernameLoginUser(n) == username1) /\ (passwordLoginUser(n) == password1) ELSE False FI]]                                                                                                                   ->  loggedInUser1
+        loggedInUser1   ->  Outp ? o {accessToken1 := o}                                                                                                                                                                                                                    ->  createUser2
+        
+        -- Create and login user2, save access token in var
         createUser2     ->  Inp  ? n [[ IF isCreateUser(n) THEN strinre(usernameCreateUser(n), REGEX('[A-Z][a-z]+')) /\ strinre(passwordCreateUser(n), REGEX('[A-Z][a-z]+')) ELSE False FI ]] { username2 := usernameCreateUser(n); password2 := passwordCreateUser(n) }    ->  createdUser2
-        createdUser2    ->  Outp ? o                                                                                                                                                                                                ->  loginUser2
-        loginUser2      ->  Inp  ? n [[ IF isLoginUser(n) THEN (usernameLoginUser(n) == username2) /\ (passwordLoginUser(n) == password2) ELSE False FI]]                                                                           ->  loggedInUser2
-        loggedInUser2   ->  Outp ? o {access_token2 := o}                                                                                                                                                                           ->  start
-        start           ->  Inp  ? n [[ IF isCreateRoom(n) THEN strinre(roomname(n), REGEX('[A-Z][a-z]+')) /\ (access_token(n) == access_token1) ELSE False FI ]] {  }                                                              ->  createdRoom
-        start           ->  Inp  ? n [[ IF isCreateRoom(n) THEN strinre(roomname(n), REGEX('[A-Z][a-z]+')) /\ (access_token(n) == access_token2) ELSE False FI ]] {  }                                                              ->  createdRoom
-        createdRoom     ->  Outp ? o                                                                                                                                                                                           ->  start
+        createdUser2    ->  Outp ? o                                                                                                                                                                                                                                        ->  loginUser2
+        loginUser2      ->  Inp  ? n [[ IF isLoginUser(n) THEN (usernameLoginUser(n) == username2) /\ (passwordLoginUser(n) == password2) ELSE False FI]]                                                                                                                   ->  loggedInUser2
+        loggedInUser2   ->  Outp ? o {accessToken2 := o}                                                                                                                                                                                                                    ->  createRoom
+        
+        -- Matrix "model"
+        -- Create any amount of rooms with user 1 or 2
+        -- start           ->  Inp  ? n [[ IF isCreateRoom(n) THEN strinre(roomnameCreateRoom(n), REGEX('[A-Z][a-z]+')) /\ (accessTokenCreateRoom(n) == accessToken1) ELSE False FI ]] {  }                                                                                 ->  createdRoom
+        -- start           ->  Inp  ? n [[ IF isCreateRoom(n) THEN strinre(roomnameCreateRoom(n), REGEX('[A-Z][a-z]+')) /\ (accessTokenCreateRoom(n) == accessToken2) ELSE False FI ]] {  }                                                                                 ->  createdRoom
+        -- createdRoom     ->  Outp ? o                                                                                                                                                                                                                                     ->  start
+        
+        -- Create a single public room with user 1
+        createRoom      ->  Inp  ? n [[ IF isCreateRoom(n) THEN strinre(roomnameCreateRoom(n), REGEX('[A-Z][a-z]+')) /\ (accessTokenCreateRoom(n) == accessToken1) /\ (isPrivateCreateRoom(n) == False) ELSE False FI ]] {  }                                                                                    ->  createdRoom
+        createdRoom     ->  Outp ? o { roomId := o }                                                                                                                                                                                                                        ->  joinRoomUser1
+        
+        -- Join room with user 1 and 2
+        joinRoomUser1   ->  Inp ! JoinRoom(accessToken1, roomId)                                                                                                                                                                                                            -> joinedRoomUser1
+        joinedRoomUser1 ->  Outp ? o                                                                                                                                                                                                                                  -> joinRoomUser2
+        joinRoomUser2   ->  Inp ! JoinRoom(accessToken2, roomId)                                                                                                                                                                                                            -> joinedRoomUser2
+        joinedRoomUser2 ->  Outp ? o                                                                                                                                                                                                                                       -> end
+
 ENDDEF
 
 CHANDEF  Chans

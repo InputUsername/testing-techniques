@@ -101,6 +101,8 @@ def create_room(name: str, is_private: bool, access_token: str) -> Response:
 10.4.2.2   POST /_matrix/client/r0/rooms/{roomId}/join
 """
 def join_room(access_token: str, room_id: str) -> int:
+    print("access_token: " + access_token)
+    print("room_id: " + room_id)
     response = post_request("/_matrix/client/r0/rooms/" +
                             room_id + "/join", {}, access_token)
 
