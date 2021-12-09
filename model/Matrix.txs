@@ -1,48 +1,54 @@
-TYPEDEF AuthorizedCmd ::=
-      Register { rusername, rpassword :: String }
-    | Login { lusername, lpassword :: String }
-    | CreateRoom { cname :: String }
-    | JoinRoom { rname :: String }
-ENDDEF
-
+-- Commands that may be made as 'input' to Matrix
 TYPEDEF Cmd ::=
-      Unauthorized { ucmd :: String }
-    | Authorized { bearer :: String; acmd :: AuthorizedCmd }
+      Authorize { uusr, upwd :: String }
+    | Register { ruusr, rpwd :: String }
+    | CreateRoom { crname :: String }
+    | JoinRoom { jrname :: String }
 ENDDEF
 
+-- Responses that may be received, as 'output' from Matrix
 TYPEDEF Res ::=
       Ok
     | Bearer { btoken :: String }
     | Error { code :: Int; err_message :: String } 
 ENDDEF
 
-STAUTDEF matrixstaut [ Inp :: Cmd; Outp :: Res ] ( ) ::=
-    STATE
-        init, waitbearer, bearer, register
-    VAR
-        authentication_type :: String;
-        token :: String;
-        res :: Res;
-        username :: String;
-        password :: String
-    INIT
-        init { 
-            authentication_type := "unauthenticated";
-            token := "";
-            username := "";
-            password := ""
-            }
-    TRANS
-        init -> Inp ? req [[ isUnauthorized(req) ]] -> waitbearer
-        waitbearer -> Outp ! res [[ isBearer(res) ]] { token := btoken(res) } -> bearer
+-- Username validation according to https://matrix.org/docs/spec/appendices#user-identifiers
+FUNCDEF isValidUsername ( val :: String ) :: Bool
+ ::=
+    strinre( val, REGEX('[a-z0-9.=_-/]{1,255}') )
 ENDDEF
 
-PROCDEF Authenticate [ Inp :: Cmd; Outp :: Bearer ]  () ::=
-    Inp ?cmd [[IF is]]
-
+-- TODO: extend regex based on:
+-- https://matrix.org/docs/spec/client_server/r0.6.1#notes-on-password-management
+FUNCDEF isValidPassword ( val :: String ) :: Bool
+ ::=
+    strinre( val, REGEX('[A-Za-z0-9.=_-/]{8,255}') )
 ENDDEF
 
+-- TODO: find room name specification. For now exclude white space characters,
+-- since it is harder for serialization/deserialization (command arguments are now
+-- white-space separated).
+FUNCDEF isValidRoomName ( val :: String ) :: Bool
+ ::=
+    strinre( val, REGEX('[A-Za-z]{8,255}') )
+ENDDEF
 
+-- Matrix
+PROCDEF MatrixProc [Input :: Cmd; Output :: Res] 
+                    ( 
+
+                    ) EXIT
+::= Input ?cmd [[IF isAuthorize(cmd)
+                THEN isValidUsername(uusr(cmd)) /\ isValidPassword(upwd(cmd))
+                ELSE False
+                FI]]
+    >-> 
+    Output ?res
+    >->
+    MatrixProc[Input, Output]()
+        
+ENDDEF
 
 CHANDEF Chans
 ::=
@@ -56,7 +62,7 @@ MODELDEF    Matrix
     CHAN OUT    Output
 
     BEHAVIOUR
-        matrixstaut [Input, Output] ()
+        MatrixProc [Input, Output] ()
 ENDDEF
 
 CNECTDEF Sut
