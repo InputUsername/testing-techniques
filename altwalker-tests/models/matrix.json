@@ -1,0 +1,62 @@
+{
+	"name": "Default Models",
+	"models": [
+		{
+			"name": "UserAndRoomManagement",
+			"generator": "random(edge_coverage(100) && vertex_coverage(100))",
+			"startElementId": "v0",
+			"vertices": [
+				{
+					"id": "v0",
+					"name": "v_start"
+				},
+				{
+					"id": "v1",
+					"name": "v_registered"
+				},
+				{
+					"id": "v2",
+					"name": "v_logged_in"
+				}
+			],
+			"edges": [
+				{
+					"id": "e0",
+					"name": "e_register",
+					"sourceVertexId": "v0",
+					"targetVertexId": "v1"
+				},
+				{
+					"id": "e1",
+					"name": "e_register",
+					"sourceVertexId": "v1",
+					"targetVertexId": "v1"
+				},
+				{
+					"id": "e2",
+					"name": "e_login",
+					"sourceVertexId": "v1",
+					"targetVertexId": "v2"
+				},
+				{
+					"id": "e3",
+					"name": "e_registered_login",
+					"sourceVertexId": "v1",
+					"targetVertexId": "v2"
+				},
+				{
+					"id": "e5",
+					"name": "e_login",
+					"sourceVertexId": "v2",
+					"targetVertexId": "v2"
+				},
+				{
+					"id": "e6",
+					"name": "e_register",
+					"sourceVertexId": "v2",
+					"targetVertexId": "v1"
+				}
+			]
+		}
+	]
+}
