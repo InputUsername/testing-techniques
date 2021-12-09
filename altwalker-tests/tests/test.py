@@ -3,6 +3,7 @@ from dataclasses import dataclass
 
 from .base import *
 
+
 @dataclass
 class User:
     username: str
@@ -96,3 +97,12 @@ class UserAndRoomManagement:
             assert response.status_code == 200
             is_private = response.json()['visibility'] == 'private'
             assert is_private == room.is_private
+
+    def e_join_room(self, data):
+        pass
+
+    def e_creator_join(self, data):
+        pass
+
+    def v_room_joined(self, data):
+        pass

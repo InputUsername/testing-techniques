@@ -21,6 +21,10 @@
 				{
 					"id": "v3",
 					"name": "v_room_created"
+				},
+				{
+					"id": "v4",
+					"name": "v_room_joined"
 				}
 			],
 			"edges": [
@@ -83,6 +87,24 @@
 					"name": "e_login",
 					"sourceVertexId": "v3",
 					"targetVertexId": "v2"
+				},
+				{
+					"id": "e11",
+					"name": "e_join_room",
+					"sourceVertexId": "v3",
+					"targetVertexId": "v4"
+				},
+				{
+					"id": "e12",
+					"name": "e_creator_join",
+					"sourceVertexId": "v3",
+					"targetVertexId": "v4"
+				},
+				{
+					"id": "e13",
+					"name": "e_join_room",
+					"sourceVertexId": "v4",
+					"targetVertexId": "v4"
 				}
 			]
 		}
