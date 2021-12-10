@@ -1,5 +1,6 @@
 import requests
 from requests.models import Response
+from typing import Any, Tuple
 
 url = "http://localhost:8008"
 # url = "http://synapse:8008"
@@ -9,7 +10,7 @@ url = "http://localhost:8008"
 
 Attempts to login a user in and returns the access token.
 """
-def login(username, password):
+def login(username: str, password: str):
     body = {
         "type": "m.login.password",
         "identifier": {
@@ -27,7 +28,7 @@ def login(username, password):
 
 Attempts to register a user and returns the access token and user id.
 """
-def register(username, password):
+def register(username: str, password: str):
     #  _______________________
     # |       Stage 0         |
     # | No auth               |
@@ -63,7 +64,7 @@ def register(username, password):
 
 Attempts to register a guest user and returns the access token and user id.
 """
-def register_guest(username: str, password: str):
+def register_guest(username: str, password: str) -> Tuple[str, str]:
     body = {
         "auth": {
             "type": "m.login.dummy"
@@ -72,10 +73,13 @@ def register_guest(username: str, password: str):
         "password": password
     }
 
-    response: Response = post_request(
-        "/_matrix/client/r0/register?kind=guest", body).json()
+    res = post_request("/_matrix/client/r0/register?kind=guest", body)
+    json_res = res.json()
+    
+    user_id: str= json_res["user_id"]
+    access_token: str = json_res["access_token"]
 
-    return (response["access_token"], response["user_id"])
+    return (access_token, user_id)
 
 
 """
@@ -112,8 +116,8 @@ def join_room(access_token: str, room_id: str) -> int:
 """
 Execute a POST request towards the local matrix server with an optional access token.
 """
-def post_request(endpoint: str, body: str, access_token: str = None) -> Response:
-    headers_dict = dict()
+def post_request(endpoint: str, body: Any, access_token: str = "") -> Response:
+    headers_dict: dict[str, str] = dict()
 
     if access_token:
         headers_dict["Authorization"] = "Bearer " + access_token
@@ -126,8 +130,8 @@ def post_request(endpoint: str, body: str, access_token: str = None) -> Response
 """
 Execute a PUT request towards the local matrix server with an optional access token.
 """
-def put_request(endpoint: str, body: str, access_token: str = None) -> Response:
-    headers_dict = dict()
+def put_request(endpoint: str, body: str, access_token: str = "") -> Response:
+    headers_dict: dict[str, str] = dict()
 
     if access_token:
         headers_dict["Authorization"] = "Bearer " + access_token
@@ -140,8 +144,8 @@ def put_request(endpoint: str, body: str, access_token: str = None) -> Response:
 """
 Execute a GET request towards the local matrix server with an optional access token.
 """
-def get_request(endpoint: str, access_token: str = None) -> Response:
-    headers_dict = dict()
+def get_request(endpoint: str, access_token: str = "") -> Response:
+    headers_dict: dict[str, str] = dict()
 
     if access_token:
         headers_dict["Authorization"] = "Bearer " + access_token

@@ -7,13 +7,6 @@ from base import *
 HOST = '127.0.0.1'  # Standard loopback interface address (localhost)
 PORT = 7890        # Port to listen on (non-privileged ports are > 1023)
 
-import sys, signal
-def signal_handler(signal, frame):
-    print("\nprogram exiting gracefully")
-    sys.exit(0)
-
-signal.signal(signal.SIGINT, signal_handler)
-
 def to_bool(bl: bool):
     return bl == 'True'
 
@@ -23,7 +16,7 @@ def parse_request(decoded_str: str) -> str:
 
     match function_name:
         case "CreateUser":
-            (access_token, user_id) = register(match_args[1], match_args[2])
+            (access_token, _) = register(match_args[1], match_args[2])
             return access_token
 
         case "LoginUser":
@@ -32,12 +25,14 @@ def parse_request(decoded_str: str) -> str:
 
         case "CreateRoom":
             room_id = create_room(match_args[1], to_bool(match_args[2]), match_args[3])
-            return room_id
+            return str(room_id)
 
         case "JoinRoom":
             room_id = join_room(match_args[1], match_args[2])
             str_room_id = str(room_id)
             return str_room_id
+        case _:
+            return ""
 
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -53,9 +48,8 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             answer_str = parse_request(decoded_str) + "\n"
             print("Returning: " + answer_str)
             if not received_bytes:
-                break
-            if answer_str:
-                answer_bytes = answer_str.encode()
+                break    
+            answer_bytes = answer_str.encode()
             conn.sendall(answer_bytes)
             
 #  docker run -d --name synapse --mount type=bind,src=C:\Users\Ruben\testing-techniques\synapse\data,dst=/data -p 8008:8008 matrixdotorg/synapse:latest  
