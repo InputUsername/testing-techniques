@@ -1,77 +1,386 @@
+-------------------------------------------------------------------------
+-- TYPEDEF [Cmd, Res]
+-------------------------------------------------------------------------
+
 -- Commands that may be made as 'input' to Matrix
 TYPEDEF Cmd ::=
-      Authorize { uusr, upwd :: String }
-    | Register { ruusr, rpwd :: String }
-    | CreateRoom { crname :: String }
-    | JoinRoom { jrname :: String }
+	  RegisterUser 	{ ruUsername, ruPassword :: String }
+	| LoginUser 	{ luUsername, luPassword :: String }
+	| CreateRoom 	{ crRoomName, crIsPrivate, crAccessToken :: String }
+	| JoinRoom 		{ jrAccessToken, jrRoomId :: String }
+    | SendMessage 	{ smAccessToken, smRoomId :: String; smTxn :: Int; smContent :: String }
+    | RedactMessage { rmAccessToken, rmRoomid :: String; rmTxn :: Int; rmEventId :: String }
 ENDDEF
 
 -- Responses that may be received, as 'output' from Matrix
 TYPEDEF Res ::=
-      Ok
-    | Bearer { btoken :: String }
-    | Error { code :: Int; err_message :: String } 
+	  Ack
+	| Error 		{ errCode :: Int }
+	| AccessToken 	{ token :: String }
+	| RoomId 		{ roomId :: String }
+    | EventId 		{ eiId :: String }
 ENDDEF
 
--- Username validation according to https://matrix.org/docs/spec/appendices#user-identifiers
+
+-------------------------------------------------------------------------
+-- TYPEDEF [Message, MessageList]
+-------------------------------------------------------------------------
+
+-- A message event has a transaction identifier, string contents, and a (by Matrix returned) event id
+-- Event IDs are unique and may be used for redactions
+TYPEDEF Message
+ ::=
+    Message { txn :: Int
+            ; eid :: String
+            ; content :: String 
+            }
+ENDDEF
+
+-- A list of messages
+TYPEDEF MessageList
+ ::=
+      NoMessages
+    | Messages  { hd :: Message
+                ; tl :: MessageList
+                }
+ENDDEF
+
+
+-------------------------------------------------------------------------
+-- FUNCDEF [on MessageList]
+-------------------------------------------------------------------------
+
+-- Add a message to the back of the list of messages
+FUNCDEF add ( m :: Message; messages :: MessageList ) :: MessageList
+ ::=
+    IF   isNoMessages(messages)
+    THEN Messages(m, NoMessages)
+    ELSE Messages(hd(messages), add(m, tl(messages)))
+    FI
+ENDDEF
+
+-- Remove (the first occurence of) a message by event id from the list of messages if it exists
+FUNCDEF remove ( id :: String ; messages :: MessageList ) :: MessageList
+ ::=
+    IF  isNoMessages(messages)
+    THEN NoMessages
+    ELSE
+        IF      eid(hd(messages)) == id
+        THEN    tl(messages)
+        ELSE    Messages(hd(messages), remove(id, tl(messages)))
+        FI
+    FI
+ENDDEF
+
+-- Checker whether a message occures inside the MessageList (by id)
+FUNCDEF idOccurs ( id :: String; messages :: MessageList ) :: Bool
+ ::=
+    IF isNoMessages(messages)
+    THEN False
+    ELSE
+        IF      eid(hd(messages)) == id
+        THEN    True
+        ELSE    idOccurs(id, tl(messages))
+        FI
+    FI
+ENDDEF
+
+
+-------------------------------------------------------------------------
+-- FUNCDEF [on validation]
+-------------------------------------------------------------------------
+
+-- Use simple strings for concepts such as messages and room names:
+-- we are focussing on the Matrix mechanisms, not input validation
+FUNCDEF isLowercaseString ( str :: String ) :: Bool
+ ::=
+    strinre( str, REGEX('[a-z]+') )
+ENDDEF
+
+-- https://matrix.org/docs/spec/appendices#user-identifiers
+-- Fixed length because this is a hard job for Z3 apparently
 FUNCDEF isValidUsername ( val :: String ) :: Bool
  ::=
-    strinre( val, REGEX('[a-z0-9.=_-/]{1,255}') )
+    strinre( val, REGEX('[a-z0-9.=_/]{8}') )
 ENDDEF
 
--- TODO: extend regex based on:
 -- https://matrix.org/docs/spec/client_server/r0.6.1#notes-on-password-management
+-- Fixed length because this is a hard job for Z3 apparently
 FUNCDEF isValidPassword ( val :: String ) :: Bool
  ::=
-    strinre( val, REGEX('[A-Za-z0-9.=_-/]{8,255}') )
+    strinre( val, REGEX('[A-Za-z0-9.=_/]{12}') )
 ENDDEF
 
--- TODO: find room name specification. For now exclude white space characters,
--- since it is harder for serialization/deserialization (command arguments are now
--- white-space separated).
-FUNCDEF isValidRoomName ( val :: String ) :: Bool
+
+-------------------------------------------------------------------------
+-- PROCDEF [authenticate]
+-- Process to authenticate a client by registration or login
+-- EXITs after completing authentication
+-------------------------------------------------------------------------
+
+PROCDEF authenticate [ In :: Cmd
+					 ; Out:: Res
+					 ]
+				    (
+					  username, password :: String
+				    ; alreadyRegistered :: Bool
+				    )
+				    EXIT
+	::=
+		-- Register user
+		[[ not(alreadyRegistered) ]]
+		=>> In ! RegisterUser(username, password)
+			
+			>->
+			(
+				Out ? err [[ isError(err) ]] >-> authenticate [ In, Out ] ( username, password, True )
+			## 
+				EXIT
+			)
+
+		##
+
+		-- Login user, we were already registed
+		[[ alreadyRegistered ]]
+		=>> 
+			In ! LoginUser(username, password)
+		>-> EXIT
+ENDDEF
+
+-------------------------------------------------------------------------
+
+PROCDEF matrixMessaging [ In :: Cmd
+                        ; Out :: Res
+                        ] 
+                        ( txn :: Int
+                        ; accessToken, roomId :: String
+						; isModerator :: Bool
+						; localMessages :: MessageList
+                        ) 
+    ::=
+		-- Send
+            In ? cmd 	[[  IF isSendMessage(cmd)
+							THEN (smAccessToken(cmd) == accessToken)
+								  /\
+								 (smRoomId(cmd) == roomId)
+								  /\
+								 (smTxn(cmd) == txn)
+							     /\
+							     isLowercaseString(smContent(cmd)) 
+							ELSE False
+							FI
+							]]
+        >-> Out ? res 	[[ isEventId(res) ]]
+        >-> matrixMessaging [ In, Out ] ( txn + 1, accessToken, roomId, isModerator, add(Message(smTxn(cmd), eiId(res), smContent(cmd)), localMessages) )
+		
+	##
+		[[ isModerator ]]
+		=>>
+		-- Redact: redactable messages available
+            In ? cmd  [[ IF (isRedactMessage(cmd) /\ not(isNoMessages(localMessages)))
+                         THEN (rmAccessToken(cmd) == accessToken)
+							   /\
+							   (rmRoomid(cmd) == roomId)
+							   /\
+							   (rmTxn(cmd) == txn)
+							   /\ 
+							   idOccurs(rmEventId(cmd), localMessages) 
+                         ELSE False
+                         FI
+                      ]]
+        >-> Out ? res
+        >-> matrixMessaging [ In, Out ] ( txn + 1, accessToken, roomId, isModerator, remove(rmEventId(cmd), localMessages) )
+    ##
+		[[ isModerator ]]
+		=>>
+		-- Redact: no redactable messages available
+            In ? cmd    [[ IF (isRedactMessage(cmd) /\ isNoMessages(localMessages))
+                           THEN (rmAccessToken(cmd) == accessToken)
+							     /\
+							     (rmRoomid(cmd) == roomId)
+							     /\
+							     (rmTxn(cmd) == txn)
+							     /\ 
+							     idOccurs(rmEventId(cmd), localMessages) 
+						   ELSE False
+						   FI
+						]]
+        >-> Out ? res
+        >-> matrixMessaging [ In, Out ] ( txn, accessToken, roomId, isModerator, localMessages )
+ENDDEF
+
+
+-------------------------------------------------------------------------
+-- PROCDEF [matrixSetup]
+-- Setup the authentication of two clients, create and join a chat room
+-------------------------------------------------------------------------
+						   
+PROCDEF matrixSetup [ In1, In2  :: Cmd
+					; Out1, Out2 :: Res
+					]
+					(
+					  username1, password1,
+					  username2, password2 :: String
+					)
+	::=
+		-- Authenticate client 1
+			authenticate [ In1, Out1 ] ( username1, password1, False)
+		>>>
+			Out1 ?  accessToken1Res [[ isAccessToken(accessToken1Res) ]]
+		>->
+		LET accessToken1 =  token(accessToken1Res) IN
+		-- Authenticate client 2
+		authenticate [ In2, Out2 ] ( username2, password2, False)
+		>>>
+			Out2 ?  accessToken2Res [[ isAccessToken(accessToken2Res) ]]
+			
+		>->
+		LET accessToken2 =  token(accessToken2Res) IN
+		-- Creates a public chat room with client 1
+			In1 ? createRoomCmd [[ IF isCreateRoom(createRoomCmd)
+								   THEN isLowercaseString(crRoomName(createRoomCmd))
+										/\
+										(crIsPrivate(createRoomCmd) == "False")
+										/\
+										(crAccessToken(createRoomCmd) == accessToken1)
+								   ELSE False
+								   FI
+								]]
+		>->
+			Out1 ? roomIdRes	[[ isRoomId(roomIdRes) ]]
+		>->
+		-- Client 2 joins the public chat room
+			In2 ? joinRoomCmd	[[ IF isJoinRoom(joinRoomCmd)
+								   THEN (jrAccessToken(joinRoomCmd) == accessToken2)
+										/\
+										(jrRoomId(joinRoomCmd) == roomId(roomIdRes))
+								   ELSE False
+								   FI
+								]]
+		>->
+			Out2 ! Ack
+		>-> 
+		LET roomId1 = roomId(roomIdRes) IN
+			matrixMessaging [ In1, Out1 ] ( 0, accessToken1, roomId1, True, NoMessages ) ||| matrixMessaging [ In2, Out2 ] ( 0, accessToken2, roomId1, False, NoMessages )
+		NI
+		NI
+		NI
+ENDDEF
+
+-------------------------------------------------------------------------
+-- PROCDEF [matrixServerRoom]
+-------------------------------------------------------------------------
+
+PROCDEF matrixServerRoom [ In1, In2  :: Cmd
+						 ; Out1, Out2 :: Res
+			             ]
+						 (
+						  messages :: MessageList
+						 )
  ::=
-    strinre( val, REGEX('[A-Za-z]{8,255}') )
+	-- Message sent from channel 1
+		In1 ? cmd  [[ isSendMessage(cmd) ]]
+		>->
+		Out1 ? res [[ isEventId(res) ]]
+		>->
+		LET mTxn = smTxn(cmd); mContent = smContent(cmd); mId = eiId(res)  IN
+			matrixServerRoom [ In1, In2, Out1, Out2 ] ( add(Message(mTxn, mId, mContent), messages) )
+		NI
+
+	##
+
+	-- Message sent from channel 2
+		In2 ? cmd  [[ isSendMessage(cmd) ]]
+		>->
+		Out2 ? res [[ isEventId(res) ]]
+		>->
+		LET mTxn = smTxn(cmd); mContent = smContent(cmd); mId = eiId(res)  IN
+			matrixServerRoom [ In1, In2, Out1, Out2 ] ( add(Message(mTxn, mId, mContent), messages) )
+		NI
+
+	-- Fallback cases: there was no I/O relevant for the state of the server room
+
+	##
+		In1 ? cmd [[ not(isSendMessage(cmd)) ]]
+		>->
+		matrixServerRoom [ In1, In2, Out1, Out2 ] ( messages )
+	##
+		In2 ? cmd [[ not(isSendMessage(cmd)) ]]
+		>->
+		matrixServerRoom [ In1, In2, Out1, Out2 ] ( messages )
+	##
+		Out1 ? res
+		>->
+		matrixServerRoom [ In1, In2, Out1, Out2 ] ( messages )
+	##
+		Out2 ? res
+		>->
+		matrixServerRoom [ In1, In2, Out1, Out2 ] ( messages )
 ENDDEF
 
--- Matrix
-PROCDEF MatrixProc [Input :: Cmd; Output :: Res] 
-                    ( 
+-------------------------------------------------------------------------
 
-                    ) EXIT
-::= Input ?cmd [[IF isAuthorize(cmd)
-                THEN isValidUsername(uusr(cmd)) /\ isValidPassword(upwd(cmd))
-                ELSE False
-                FI]]
-    >-> 
-    Output ?res
-    >->
-    MatrixProc[Input, Output]()
-        
+PROCDEF matrix [ In1, In2  :: Cmd
+			   ; Out1, Out2 :: Res
+			   ]
+			   (
+				 username1, password1,
+				 username2, password2 :: String
+			   )
+ ::=
+	-- Setup clients
+	matrixSetup [ In1, In2, Out1, Out2 ] ( username1, password1, username2, password2 )
+
+	-- Synchronize over all channels
+	|[ In1, In2, Out1, Out2 ]|
+	
+	-- Setup server room
+	matrixServerRoom [ In1, In2, Out1, Out2 ] ( NoMessages )
+	
 ENDDEF
 
-CHANDEF Chans
-::=
-    Input :: Cmd ;
-    Output :: Res
+-------------------------------------------------------------------------
+
+CHANDEF Chans 
+ ::=
+    In1, In2 :: Cmd ;
+    Out1, Out2 :: Res
 ENDDEF
+
+-------------------------------------------------------------------------
 
 MODELDEF    Matrix
 ::=
-    CHAN IN     Input
-    CHAN OUT    Output
+    CHAN IN     In1, In2
+    CHAN OUT    Out1, Out2
 
     BEHAVIOUR
-        MatrixProc [Input, Output] ()
+        matrix  [
+				  In1, In2, Out1, Out2
+				]
+				(
+				  "Testuser1", "TestPassword1",
+				  "Testuser2", "TestPassword2"
+				)
 ENDDEF
+
+-------------------------------------------------------------------------
 
 CNECTDEF Sut
 ::=
     CLIENTSOCK
 
-    CHAN OUT    Input   HOST "localhost" PORT 7890
-    ENCODE      Input   ? s -> ! toString(s)
+    CHAN OUT    In1   HOST "localhost" PORT 7890
+    ENCODE      In1   ? s -> ! toString(s)
 
-    CHAN IN     Output  HOST "localhost" PORT 7890
-    DECODE      Output  ! fromString(s) <- ? s 
+    CHAN IN     Out1  HOST "localhost" PORT 7890
+    DECODE      Out1  ! fromString(s) <- ? s
+	
+	CHAN OUT    In2   HOST "localhost" PORT 7891
+    ENCODE      In2   ? s -> ! toString(s)
+
+    CHAN IN     Out2  HOST "localhost" PORT 7891
+    DECODE      Out2  ! fromString(s) <- ? s 
 ENDDEF
+
+-------------------------------------------------------------------------
