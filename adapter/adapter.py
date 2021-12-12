@@ -1,6 +1,7 @@
 import socket
 import sys
 import re
+import time
 
 from base import *
 
@@ -122,6 +123,10 @@ def process(message, sockfile):
         room_id = arguments[1]
 
         sync_response = None
+
+        # Give the server some time: we are probably trying to synchronize while
+        # the server is still processing some event, resulting in false negatives...
+        time.sleep(0.05)
 
         if access_token in synchronization_dict:
             sync_response = sync(access_token, synchronization_dict[access_token])
