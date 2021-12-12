@@ -36,68 +36,67 @@ def process(message, sockfile):
 
     Following the endpoints as described at https://matrix.org/docs/spec/client_server/r0.6.1
     """
-    match command:
-        # Register a user and return the access token.
-        case 'RegisterUser':
-            response = register(arguments[0], arguments[1])
-            if response.status_code == 200:
-                access_token = response.json()['access_token']
-                sockfile.write(f'AccessToken("{access_token}")\n')
-            else:
-                sockfile.write(f'Error({response.status_code})\n')
-            
-            sockfile.flush()
+    # Register a user and return the access token.
+    if command == 'RegisterUser':
+        response = register(arguments[0], arguments[1])
+        if response.status_code == 200:
+            access_token = response.json()['access_token']
+            sockfile.write(f'AccessToken("{access_token}")\n')
+        else:
+            sockfile.write(f'Error({response.status_code})\n')
+        
+        sockfile.flush()
 
-        # Login a user and return the access token.
-        case 'LoginUser':
-            response = login(arguments[0], arguments[1])
-            if response.status_code == 200:
-                access_token = response.json()['access_token']
-                sockfile.write(f'AccessToken("{access_token}")\n')
-            else:
-                sockfile.write(f'Error({response.status_code})\n')
-            sockfile.flush()
+    # Login a user and return the access token.
+    elif command == 'LoginUser':
+        response = login(arguments[0], arguments[1])
+        if response.status_code == 200:
+            access_token = response.json()['access_token']
+            sockfile.write(f'AccessToken("{access_token}")\n')
+        else:
+            sockfile.write(f'Error({response.status_code})\n')
+        sockfile.flush()
 
-        # Create a room and return the room id.
-        case 'CreateRoom':
-            response = create_room(arguments[0], to_bool(arguments[1]), arguments[2])
-            if response.status_code == 200:
-                room_id = response.json()['room_id']
-                sockfile.write(f'RoomId("{room_id}")\n')
-            else:
-                sockfile.write(f'Error({response.status_code})\n')
-            sockfile.flush()
+    # Create a room and return the room id.
+    elif command == 'CreateRoom':
+        response = create_room(arguments[0], to_bool(arguments[1]), arguments[2])
+        if response.status_code == 200:
+            room_id = response.json()['room_id']
+            sockfile.write(f'RoomId("{room_id}")\n')
+        else:
+            sockfile.write(f'Error({response.status_code})\n')
+        sockfile.flush()
 
-        # Join a room and send Acknowledgement.
-        case 'JoinRoom':
-            response = join_room(arguments[0], arguments[1])
-            if response.status_code == 200:
-                sockfile.write('Ack\n')
-            else:
-                sockfile.write(f'Error({response.status_code})\n')
-            sockfile.flush()
+    # Join a room and send Acknowledgement.
+    elif command == 'JoinRoom':
+        response = join_room(arguments[0], arguments[1])
+        if response.status_code == 200:
+            sockfile.write('Ack\n')
+        else:
+            sockfile.write(f'Error({response.status_code})\n')
+        sockfile.flush()
 
-        # Send a message in a room and return the event id.
-        case 'SendMessage':
-            response = send_message(arguments[0], arguments[1], arguments[2], arguments[3])
-            if response.status_code == 200:
-                event_id = response.json()['event_id'].replace('$', '%24')
-                sockfile.write(f'EventId("{event_id}")\n')
-            else:
-                sockfile.write(f'Error({response.status_code})\n')
-            sockfile.flush()
+    # Send a message in a room and return the event id.
+    elif command == 'SendMessage':
+        response = send_message(arguments[0], arguments[1], arguments[2], arguments[3])
+        if response.status_code == 200:
+            event_id = response.json()['event_id'].replace('$', '%24')
+            sockfile.write(f'EventId("{event_id}")\n')
+        else:
+            sockfile.write(f'Error({response.status_code})\n')
+        sockfile.flush()
 
-        # Redact and send Acknowledgement.
-        case 'RedactMessage':
-            response = redact(arguments[0], arguments[1], arguments[2], arguments[3])
-            if response.status_code == 200:
-                sockfile.write('Ack\n')
-            else:
-                sockfile.write(f'Error({response.status_code})\n')
-            sockfile.flush()
+    # Redact and send Acknowledgement.
+    elif command == 'RedactMessage':
+        response = redact(arguments[0], arguments[1], arguments[2], arguments[3])
+        if response.status_code == 200:
+            sockfile.write('Ack\n')
+        else:
+            sockfile.write(f'Error({response.status_code})\n')
+        sockfile.flush()
 
-        case _:
-            print(f'WARN: unknown command \'{command}\'')
+    else:
+        print(f'WARN: unknown command \'{command}\'')
 
 def main():
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
