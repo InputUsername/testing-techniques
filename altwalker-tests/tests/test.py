@@ -47,8 +47,9 @@ class UserAndRoomManagement:
         Called on model destruction.
         """
 
-        print(self.users)
-        print(self.logged_in)
+        print(self.users, end='\n\n')
+        print(self.logged_in, end='\n\n')
+        print(self.rooms, end='\n\n')
         print(data)
 
     def v_start(self, _data):
@@ -168,13 +169,12 @@ class UserAndRoomManagement:
             if room.is_private:
                 continue
 
-            for username, user in self.users.items():
+            for username, user in self.logged_in.items():
                 if username != room.creator and username not in room.members:
                     status_code = join_room(user.access_token, room.id)
                     assert status_code == 200
                     room.members.add(username)
-                    data['max_room_members'] = max(int(data['max_room_members']), len(room.members))
-                    break
+                    return
 
     def e_creator_join(self, data):
         """
@@ -185,15 +185,17 @@ class UserAndRoomManagement:
         """
 
         for _room_name, room in self.rooms.items():
-            for username, user in self.users.items():
+            for username, user in self.logged_in.items():
                 if username == room.creator:
                     room.members.add(username)
-                    data['max_room_members'] = max(int(data['max_room_members']), len(room.members))
-                    break
+                    return
 
     def v_room_joined(self, data):
         """
         Called when v_room_joined is visited.
         """
+
+        for _room_name, room in self.rooms.items():
+            data['max_room_members'] = max(int(data['max_room_members']), len(room.members))
 
         assert(int(data['max_room_members']) != 0)
