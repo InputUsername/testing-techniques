@@ -12,9 +12,24 @@ HOST = '0.0.0.0'
 PORT = int(sys.argv[1])
 # PORT = 7891
 
-# Convert a string to a booelan
+# Store the user id associated with an access token
+user_dict = dict()
+
+# Store the latest SYNC time associated with an access token
+synchronization_dict = dict()
+
+# Store the m.room.message and m.room.redaction events that still need
+# to be synchronized, associated with an access token. Ignores
+# events that were sent with that same access token.
+unsynchronized_dict = dict()
+
+# Convert a string to a boolean
 def to_bool(bl: bool):
     return bl == 'True'
+
+# Escape the event ID to comply with Torxakis/Matrix communication
+def escape_event_id(event_id):
+    return event_id.replace('$', '%24')
 
 """
 Process a TorXakis request into a Matrix request.
@@ -41,6 +56,9 @@ def process(message, sockfile):
         response = register(arguments[0], arguments[1])
         if response.status_code == 200:
             access_token = response.json()['access_token']
+            user_id = response.json()['user_id']
+            user_dict[access_token] = user_id
+
             sockfile.write(f'AccessToken("{access_token}")\n')
         else:
             sockfile.write(f'Error({response.status_code})\n')
@@ -52,6 +70,9 @@ def process(message, sockfile):
         response = login(arguments[0], arguments[1])
         if response.status_code == 200:
             access_token = response.json()['access_token']
+            user_id = response.json()['user_id']
+            user_dict[access_token] = user_id
+
             sockfile.write(f'AccessToken("{access_token}")\n')
         else:
             sockfile.write(f'Error({response.status_code})\n')
@@ -80,7 +101,7 @@ def process(message, sockfile):
     elif command == 'SendMessage':
         response = send_message(arguments[0], arguments[1], arguments[2], arguments[3])
         if response.status_code == 200:
-            event_id = response.json()['event_id'].replace('$', '%24')
+            event_id = escape_event_id(response.json()['event_id'])
             sockfile.write(f'EventId("{event_id}")\n')
         else:
             sockfile.write(f'Error({response.status_code})\n')
@@ -93,6 +114,55 @@ def process(message, sockfile):
             sockfile.write('Ack\n')
         else:
             sockfile.write(f'Error({response.status_code})\n')
+        sockfile.flush()
+
+    # Synchronise and return latest relevant event or ack if none are available
+    elif command == 'Synchronise':
+        access_token = arguments[0]
+        room_id = arguments[1]
+
+        sync_response = None
+
+        if access_token in synchronization_dict:
+            sync_response = sync(access_token, synchronization_dict[access_token])
+        else:
+            sync_response = sync(access_token)
+            unsynchronized_dict[access_token] = []
+
+        data = sync_response.json()
+
+        try:
+            synchronization_dict[access_token] = data['next_batch']
+            sender_id = user_dict[access_token]
+
+            events = data['rooms']['join'][room_id]['timeline']['events']
+            for event in events:
+                message_type = event['type']
+                sender = event['sender']
+                if message_type == 'm.room.message' and not sender == sender_id:
+                    if event['content']['msgtype'] == 'm.text':
+                        event_id = escape_event_id(event['event_id'])
+                        content = event['content']['body']
+                        unsynchronized_dict[access_token].append(f'NewMessage("{event_id}", "{content}")')
+
+                elif message_type == 'm.room.redaction' and not sender == sender_id:
+                    redact_id = escape_event_id(event['redacts'])
+                    unsynchronized_dict[access_token].append(f'MessageRedacted("{redact_id}")')
+
+        except KeyError:
+            # Probably should log the actual error here. For now assume that we
+            # had no body, thus acknowledge (nothing to do.)
+            pass
+
+        # No unsychronized events, Acknowledge
+        if len(unsynchronized_dict[access_token]) < 1:
+            sockfile.write(f'Ack\n')
+
+        # Pop the fist event and return
+        else:
+            e = unsynchronized_dict[access_token].pop(0)
+            sockfile.write(f'{e}\n')
+
         sockfile.flush()
 
     else:

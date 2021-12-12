@@ -79,6 +79,29 @@ def redact(access_token, room_id, txn, event_id):
     return response
 
 """
+9.4.1   GET /_matrix/client/r0/sync
+Attempts to synchronize the client's state with the latest state on the server
+"""
+def sync(access_token, since = None):
+
+    url = "/_matrix/client/r0/sync"
+    if since:
+        url += f"?since={since}"
+
+    response = get_request(url, access_token)
+
+    return response
+
+"""
+9.5.6   GET /_matrix/client/r0/rooms/{roomId}/messages
+Attempts to get a list of messages and state events for a room
+"""
+def get_messages(access_token, room_id, from_t):
+    response = get_request(f"/_matrix/client/r0/rooms/{room_id}/messages?from={from_t}", access_token)
+
+    return response
+
+"""
 10.1.1   POST /_matrix/client/r0/createRoom
 Attempts to create a room.
 """
