@@ -18,6 +18,7 @@ class Room:
     name: str
     is_private: bool
     id: str
+    members: set
 
 
 class UserAndRoomManagement:
@@ -30,6 +31,7 @@ class UserAndRoomManagement:
 
         self.rooms = dict()
         data['rooms'] = 0
+        data['max_room_members'] = 0
 
     def tearDownModel(self, data):
         print(self.users)
@@ -86,7 +88,7 @@ class UserAndRoomManagement:
 
         room_id = create_room(room_name, is_private, user.access_token)
 
-        self.rooms[room_name] = Room(user.username, room_name, is_private, room_id)
+        self.rooms[room_name] = Room(user.username, room_name, is_private, room_id, set())
         data['rooms'] = int(data['rooms']) + 1
 
     def v_room_created(self, data):
@@ -99,10 +101,25 @@ class UserAndRoomManagement:
             assert is_private == room.is_private
 
     def e_join_room(self, data):
-        pass
+        for _room_name, room in self.rooms.items():
+            if room.is_private:
+                continue
+
+            for username, user in self.users.items():
+                if username != room.creator and username not in room.members:
+                    status_code = join_room(user.access_token, room.id)
+                    assert status_code == 200
+                    room.members.add(username)
+                    data['max_room_members'] = max(int(data['max_room_members']), len(room.members))
+                    break
 
     def e_creator_join(self, data):
-        pass
+        for _room_name, room in self.rooms.items():
+            for username, user in self.users.items():
+                if username == room.creator:
+                    room.members.add(username)
+                    data['max_room_members'] = max(int(data['max_room_members']), len(room.members))
+                    break
 
     def v_room_joined(self, data):
-        pass
+        assert(int(data['max_room_members']) != 0)

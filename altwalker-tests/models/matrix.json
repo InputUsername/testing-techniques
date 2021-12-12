@@ -105,6 +105,24 @@
 					"name": "e_join_room",
 					"sourceVertexId": "v4",
 					"targetVertexId": "v4"
+				},
+				{
+					"id": "e14",
+					"name": "e_create_room",
+					"sourceVertexId": "v4",
+					"targetVertexId": "v3"
+				},
+				{
+					"id": "e15",
+					"name": "e_register",
+					"sourceVertexId": "v4",
+					"targetVertexId": "v1"
+				},
+				{
+					"id": "e16",
+					"name": "e_login",
+					"sourceVertexId": "v4",
+					"targetVertexId": "v2"
 				}
 			]
 		}
