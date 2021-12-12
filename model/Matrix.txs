@@ -288,6 +288,19 @@ PROCDEF matrixServerRoom [ In1, In2  :: Cmd
 		NI
 
 	##
+	
+	-- Message redacted from channel 1
+		In1 ? cmd   [[ IF isRedactMessage(cmd) 
+					   THEN idOccurs(rmEventId(cmd), messages)
+					   ELSE False
+					   FI
+					]]
+		>->
+		Out1 ! Ack
+		>->
+		matrixServerRoom [ In1, In2, Out1, Out2 ] ( remove(rmEventId(cmd), messages) )
+	
+	##
 
 	-- Message sent from channel 2
 		In2 ? cmd  [[ isSendMessage(cmd) ]]
@@ -301,7 +314,7 @@ PROCDEF matrixServerRoom [ In1, In2  :: Cmd
 	-- Fallback cases: there was no I/O relevant for the state of the server room
 
 	##
-		In1 ? cmd [[ not(isSendMessage(cmd)) ]]
+		In1 ? cmd [[ not(isSendMessage(cmd)) /\ not(isRedactMessage(cmd)) ]]
 		>->
 		matrixServerRoom [ In1, In2, Out1, Out2 ] ( messages )
 	##
