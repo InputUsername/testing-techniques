@@ -521,16 +521,16 @@ CNECTDEF Sut
 ::=
     CLIENTSOCK
 
-    CHAN OUT    In1   HOST "192.168.178.11" PORT 7890
+    CHAN OUT    In1   HOST "localhost" PORT 7890
     ENCODE      In1   ? s -> ! toString(s)
 
-    CHAN IN     Out1  HOST "192.168.178.11" PORT 7890
+    CHAN IN     Out1  HOST "localhost" PORT 7890
     DECODE      Out1  ! fromString(s) <- ? s
 	
-	CHAN OUT    In2   HOST "192.168.178.11" PORT 7891
+	CHAN OUT    In2   HOST "localhost" PORT 7891
     ENCODE      In2   ? s -> ! toString(s)
 
-    CHAN IN     Out2  HOST "192.168.178.11" PORT 7891
+    CHAN IN     Out2  HOST "localhost" PORT 7891
     DECODE      Out2  ! fromString(s) <- ? s 
 ENDDEF
 
