@@ -4,30 +4,30 @@
 
 -- Commands that may be made as 'input' to Matrix
 TYPEDEF Cmd ::=
-	  RegisterUser 	{ ruUsername, ruPassword :: String }
-	| LoginUser 	{ luUsername, luPassword :: String }
-	| CreateRoom 	{ crRoomName, crIsPrivate, crAccessToken :: String }
-	| JoinRoom 		{ jrAccessToken, jrRoomId :: String }
+      RegisterUser 	{ ruUsername, ruPassword :: String }
+    | LoginUser 	{ luUsername, luPassword :: String }
+    | CreateRoom 	{ crRoomName, crIsPrivate, crAccessToken :: String }
+    | JoinRoom 		{ jrAccessToken, jrRoomId :: String }
     | SendMessage 	{ smAccessToken, smRoomId :: String; smTxn :: Int; smContent :: String }
     | RedactMessage { rmAccessToken, rmRoomId :: String; rmTxn :: Int; rmEventId :: String }
-	| Synchronise   { sAccessToken, sRoomId :: String }
+    | Synchronise   { sAccessToken, sRoomId :: String }
 ENDDEF
 
 -- Responses that may be received, as 'output' from Matrix
 TYPEDEF Res ::=
-	  Ack
-	| Error 		  { errCode :: Int }
-	| AccessToken 	  { atToken :: String }
-	| RoomId 		  { riRoomId :: String }
+      Ack
+    | Error 		  { errCode :: Int }
+    | AccessToken 	  { atToken :: String }
+    | RoomId 		  { riRoomId :: String }
     | EventId 		  { eiId :: String }
-	| NewMessage	  { nmEventId, nmContent :: String }
-	| MessageRedacted { mrEventId :: String }
+    | NewMessage	  { nmEventId, nmContent :: String }
+    | MessageRedacted { mrEventId :: String }
 ENDDEF
 
 -- Events on a server room that can be synchronized upon
 TYPEDEF Event ::=
-	  Message { mEventId, mContent :: String }
-	| Redaction { rEventId :: String }
+      Message { mEventId, mContent :: String }
+    | Redaction { rEventId :: String }
 ENDDEF
 
 
@@ -157,34 +157,34 @@ ENDDEF
 -------------------------------------------------------------------------
 
 PROCDEF matrixAuthenticatation [ In :: Cmd
-					 ; Out:: Res
-					 ]
-				    (
-					  username, password :: String
-				    ; alreadyRegistered :: Bool
-				    )
-				    EXIT
-	::=
-		-- Register user
-		[[ not(alreadyRegistered) ]]
-		=>> In ! RegisterUser(username, password)
-			
-			>->
-			(
-				-- Error 400: we were already registered, so we can login
-				Out ! Error(400) >-> matrixAuthenticatation [ In, Out ] ( username, password, True )
-			##
-				-- Successfully registered
-				EXIT
-			)
+                     ; Out:: Res
+                     ]
+                    (
+                      username, password :: String
+                    ; alreadyRegistered :: Bool
+                    )
+                    EXIT
+    ::=
+        -- Register user
+        [[ not(alreadyRegistered) ]]
+        =>> In ! RegisterUser(username, password)
+            
+            >->
+            (
+                -- Error 400: we were already registered, so we can login
+                Out ! Error(400) >-> matrixAuthenticatation [ In, Out ] ( username, password, True )
+            ##
+                -- Successfully registered
+                EXIT
+            )
 
-		##
+        ##
 
-		-- Login user
-		[[ alreadyRegistered ]]
-		=>> 
-			In ! LoginUser(username, password)
-		>-> EXIT
+        -- Login user
+        [[ alreadyRegistered ]]
+        =>> 
+            In ! LoginUser(username, password)
+        >-> EXIT
 ENDDEF
 
 
@@ -198,75 +198,94 @@ ENDDEF
 PROCDEF matrixMessaging [ In :: Cmd
                         ; Out :: Res
                         ]
-						  -- Transaction identifier associated with the access token and room id.
+                          -- Transaction identifier associated with the access token and room id.
                         ( txn :: Int
-						 -- Access token on behalf of the messager and room id which is the message target
+                         -- Access token on behalf of the messager and room id which is the message target
                         ; accessToken, roomId :: String
-						-- Whether we have moderator rights for this room.
-						; isModerator :: Bool
-						-- Local message store: not necessarily in send order, but used to determine which
-						-- messages can be redacted.
-						; localMessages :: MessageList
+                        -- Whether we have moderator rights for this room.
+                        ; isModerator :: Bool
+                        -- Local message store: not necessarily in send order, but used to determine which
+                        -- messages can be redacted.
+                        ; localMessages :: MessageList
                         )
     ::=
-		-- Synchronize the entire room state with the server
-			In ? cmd 	[[  IF isSynchronise(cmd)
-							THEN (sAccessToken(cmd) == accessToken)
-								  /\
-								  (sRoomId(cmd) == roomId)
-							ELSE False
-							FI
-						]]
-		>->
-		
-		-- Choice depending on output: keep synchronizing until Ack
-		(
-			-- 1. SYNC: a new message was sent
-			Out ? res [[ isNewMessage(res) ]] >-> matrixMessaging [ In, Out ] ( txn, accessToken, roomId, isModerator, add(Message(999, nmEventId(res), nmContent(res)), localMessages) )
-		##
-			-- 2. SYNC: a message was redacted
-			Out ? res [[ isMessageRedacted(res) ]] >-> matrixMessaging [ In, Out ] ( txn, accessToken, roomId, isModerator, remove(mrEventId(res), localMessages) )
-		
-		##
-			-- 3. SYNC: Fully synchronized with room state, we can now change the room state ourselves
-			Out ! Ack
-		>->
-			(
-				-- Send messages in the chat room
-					In ? cmd 	[[  IF isSendMessage(cmd)
-									THEN (smAccessToken(cmd) == accessToken)
-										  /\
-										 (smRoomId(cmd) == roomId)
-										  /\
-										 (smTxn(cmd) == txn)
-										 /\
-										 isLowercaseString(smContent(cmd)) 
-									ELSE False
-									FI
-								]]
-				>-> Out ? res 	[[ isEventId(res) ]]
-				>-> matrixMessaging [ In, Out ] ( txn + 1, accessToken, roomId, isModerator, add(Message(smTxn(cmd), eiId(res), smContent(cmd)), localMessages) )
-				
-			##
+        -- Synchronize the entire room state with the server
+            In ? cmd 	[[  IF isSynchronise(cmd)
+                            THEN (sAccessToken(cmd) == accessToken)
+                                  /\
+                                  (sRoomId(cmd) == roomId)
+                            ELSE False
+                            FI
+                        ]]
+        >->
+        
+        -- Choice depending on output: keep synchronizing until Ack
+        (
+            -- 1. SYNC: a new message was sent
+            Out ? res [[ isNewMessage(res) ]] >-> matrixMessaging [ In, Out ] ( txn, accessToken, roomId, isModerator, add(Message(999, nmEventId(res), nmContent(res)), localMessages) )
+        ##
+            -- 2. SYNC: a message was redacted
+            Out ? res [[ isMessageRedacted(res) ]] >-> matrixMessaging [ In, Out ] ( txn, accessToken, roomId, isModerator, remove(mrEventId(res), localMessages) )
+        
+        ##
+            -- 3. SYNC: Fully synchronized with room state, we can now change the room state ourselves
+            Out ! Ack
+        >->
+            (
+                -- Send messages in the chat room
+                    In ? cmd 	[[  IF isSendMessage(cmd)
+                                    THEN (smAccessToken(cmd) == accessToken)
+                                          /\
+                                         (smRoomId(cmd) == roomId)
+                                          /\
+                                         (smTxn(cmd) == txn)
+                                         /\
+                                         isLowercaseString(smContent(cmd)) 
+                                    ELSE False
+                                    FI
+                                ]]
+                >-> Out ? res 	[[ isEventId(res) ]]
+                >-> matrixMessaging [ In, Out ] ( txn + 1, accessToken, roomId, isModerator, add(Message(smTxn(cmd), eiId(res), smContent(cmd)), localMessages) )
+                
+            ##
 
-				[[ isModerator ]]
-				=>>
-				-- Redactaction (only possible if the room has messages and we have moderator rights)
-					In ? cmd  [[ IF (isRedactMessage(cmd) /\ not(isNoMessages(localMessages)))
-								 THEN (rmAccessToken(cmd) == accessToken)
-									   /\
-									   (rmRoomId(cmd) == roomId)
-									   /\
-									   (rmTxn(cmd) == txn)
-									   /\ 
-									   idOccurs(rmEventId(cmd), localMessages) 
-								 ELSE False
-								 FI
-							  ]]
-				>-> Out ? res
-				>-> matrixMessaging [ In, Out ] ( txn + 1, accessToken, roomId, isModerator, remove(rmEventId(cmd), localMessages) )
-			)
-		)
+                [[ isModerator ]]
+                =>>
+                -- Redactaction (only possible if the room has messages and we have moderator rights)
+                    In ? cmd  [[ IF (isRedactMessage(cmd) /\ not(isNoMessages(localMessages)))
+                                 THEN (rmAccessToken(cmd) == accessToken)
+                                       /\
+                                       (rmRoomId(cmd) == roomId)
+                                       /\
+                                       (rmTxn(cmd) == txn)
+                                       /\ 
+                                       idOccurs(rmEventId(cmd), localMessages) 
+                                 ELSE False
+                                 FI
+                              ]]
+                >-> Out ? res
+                >-> matrixMessaging [ In, Out ] ( txn + 1, accessToken, roomId, isModerator, remove(rmEventId(cmd), localMessages) )
+            
+            ##
+
+                [[ isModerator ]]
+                =>>
+                -- Redaction, but we don't have messages
+                    In ? cmd  [[ IF (isRedactMessage(cmd) /\ isNoMessages(localMessages))
+                                 THEN (rmAccessToken(cmd) == accessToken)
+                                       /\
+                                       (rmRoomId(cmd) == roomId)
+                                       /\
+                                       (rmTxn(cmd) == txn)
+                                       /\ 
+                                       idOccurs(rmEventId(cmd), localMessages)
+                                 ELSE False
+                                 FI
+                              ]]
+                >-> Out ? res
+                >-> matrixMessaging [ In, Out ] ( txn, accessToken, roomId, isModerator, localMessages )
+            )
+        )
 ENDDEF
 
 
@@ -276,57 +295,57 @@ ENDDEF
 -- Setup the authentication of two clients, create and join a chat room,
 -- run two matrixMessaging instances in parallel.
 -------------------------------------------------------------------------
-						   
+                           
 PROCDEF matrixSetup [ In1, In2  :: Cmd
-					; Out1, Out2 :: Res
-					]
-					(
-					  username1, password1,
-					  username2, password2 :: String
-					)
-	::=
-		-- Authenticate client 1
-			matrixAuthenticatation [ In1, Out1 ] ( username1, password1, False)
-		>>>
-			Out1 ?  accessToken1Res [[ isAccessToken(accessToken1Res) ]]
-		>->
-		LET accessToken1 =  atToken(accessToken1Res) IN
-		-- Authenticate client 2
-		matrixAuthenticatation [ In2, Out2 ] ( username2, password2, False)
-		>>>
-			Out2 ?  accessToken2Res [[ isAccessToken(accessToken2Res) ]]
-			
-		>->
-		LET accessToken2 =  atToken(accessToken2Res) IN
-		-- Creates a public chat room with client 1
-			In1 ? createRoomCmd [[ IF isCreateRoom(createRoomCmd)
-								   THEN isLowercaseString(crRoomName(createRoomCmd))
-										/\
-										(crIsPrivate(createRoomCmd) == "False")
-										/\
-										(crAccessToken(createRoomCmd) == accessToken1)
-								   ELSE False
-								   FI
-								]]
-		>->
-			Out1 ? roomIdRes	[[ isRoomId(roomIdRes) ]]
-		>->
-		-- Client 2 joins the public chat room
-			In2 ? joinRoomCmd	[[ IF isJoinRoom(joinRoomCmd)
-								   THEN (jrAccessToken(joinRoomCmd) == accessToken2)
-										/\
-										(jrRoomId(joinRoomCmd) == riRoomId(roomIdRes))
-								   ELSE False
-								   FI
-								]]
-		>->
-			Out2 ! Ack
-		>-> 
-		LET roomId1 = riRoomId(roomIdRes) IN
-			matrixMessaging [ In1, Out1 ] ( 0, accessToken1, roomId1, True, NoMessages ) ||| matrixMessaging [ In2, Out2 ] ( 0, accessToken2, roomId1, False, NoMessages )
-		NI
-		NI
-		NI
+                    ; Out1, Out2 :: Res
+                    ]
+                    (
+                      username1, password1,
+                      username2, password2 :: String
+                    )
+    ::=
+        -- Authenticate client 1
+            matrixAuthenticatation [ In1, Out1 ] ( username1, password1, False)
+        >>>
+            Out1 ?  accessToken1Res [[ isAccessToken(accessToken1Res) ]]
+        >->
+        LET accessToken1 =  atToken(accessToken1Res) IN
+        -- Authenticate client 2
+        matrixAuthenticatation [ In2, Out2 ] ( username2, password2, False)
+        >>>
+            Out2 ?  accessToken2Res [[ isAccessToken(accessToken2Res) ]]
+            
+        >->
+        LET accessToken2 =  atToken(accessToken2Res) IN
+        -- Creates a public chat room with client 1
+            In1 ? createRoomCmd [[ IF isCreateRoom(createRoomCmd)
+                                   THEN isLowercaseString(crRoomName(createRoomCmd))
+                                        /\
+                                        (crIsPrivate(createRoomCmd) == "False")
+                                        /\
+                                        (crAccessToken(createRoomCmd) == accessToken1)
+                                   ELSE False
+                                   FI
+                                ]]
+        >->
+            Out1 ? roomIdRes	[[ isRoomId(roomIdRes) ]]
+        >->
+        -- Client 2 joins the public chat room
+            In2 ? joinRoomCmd	[[ IF isJoinRoom(joinRoomCmd)
+                                   THEN (jrAccessToken(joinRoomCmd) == accessToken2)
+                                        /\
+                                        (jrRoomId(joinRoomCmd) == riRoomId(roomIdRes))
+                                   ELSE False
+                                   FI
+                                ]]
+        >->
+            Out2 ! Ack
+        >-> 
+        LET roomId1 = riRoomId(roomIdRes) IN
+            matrixMessaging [ In1, Out1 ] ( 0, accessToken1, roomId1, True, NoMessages ) ||| matrixMessaging [ In2, Out2 ] ( 0, accessToken2, roomId1, False, NoMessages )
+        NI
+        NI
+        NI
 ENDDEF
 
 
@@ -340,122 +359,122 @@ ENDDEF
 -------------------------------------------------------------------------
 
 PROCDEF matrixServerRoom [ In1, In2  :: Cmd
-						 ; Out1, Out2 :: Res
-			             ]
-						 (
-						  unsynchronized1, 
-						  unsynchronized2 :: EventList
-						 )
+                         ; Out1, Out2 :: Res
+                         ]
+                         (
+                          unsynchronized1, 
+                          unsynchronized2 :: EventList
+                         )
  ::=
-	-- Message sent from channel 1
-		In1 ? cmd  [[ isSendMessage(cmd) ]]
-		>->
-		Out1 ? res [[ isEventId(res) ]]
-		>->
-		LET mContent = smContent(cmd); mId = eiId(res)  IN
-			matrixServerRoom [ In1, In2, Out1, Out2 ] ( unsynchronized1, add(Message(mId, mContent), unsynchronized2) )
-		NI
+    -- Message sent from channel 1
+        In1 ? cmd  [[ isSendMessage(cmd) ]]
+        >->
+        Out1 ? res [[ isEventId(res) ]]
+        >->
+        LET mContent = smContent(cmd); mId = eiId(res)  IN
+            matrixServerRoom [ In1, In2, Out1, Out2 ] ( unsynchronized1, add(Message(mId, mContent), unsynchronized2) )
+        NI
 
-	##
-	
-	-- Message redacted from channel 1
-		In1 ? cmd   [[ isRedactMessage(cmd) ]]
-		>->
-		Out1 ! Ack
-		>->
-		matrixServerRoom [ In1, In2, Out1, Out2 ] ( unsynchronized1, add(Redaction(rmEventId(cmd)), unsynchronized2) )
-	
-	##
+    ##
+    
+    -- Message redacted from channel 1
+        In1 ? cmd   [[ isRedactMessage(cmd) ]]
+        >->
+        Out1 ! Ack
+        >->
+        matrixServerRoom [ In1, In2, Out1, Out2 ] ( unsynchronized1, add(Redaction(rmEventId(cmd)), unsynchronized2) )
+    
+    ##
 
-	-- Message sent from channel 2
-		In2 ? cmd  [[ isSendMessage(cmd) ]]
-		>->
-		Out2 ? res [[ isEventId(res) ]]
-		>->
-		LET mContent = smContent(cmd); mId = eiId(res)  IN
-			matrixServerRoom [ In1, In2, Out1, Out2 ] ( add(Message(mId, mContent), unsynchronized1), unsynchronized2 )
-		NI
-		
-	##
-	
-	-- Synchronization on channel 1
-		In1 ? cmd [[ isSynchronise(cmd) ]]
-		>->
-		(
-			[[ unsynchronized1 == NoEvents ]] =>> Out1 ! Ack
-				>->
-				matrixServerRoom [ In1, In2, Out1, Out2 ] ( unsynchronized1, unsynchronized2 )
+    -- Message sent from channel 2
+        In2 ? cmd  [[ isSendMessage(cmd) ]]
+        >->
+        Out2 ? res [[ isEventId(res) ]]
+        >->
+        LET mContent = smContent(cmd); mId = eiId(res)  IN
+            matrixServerRoom [ In1, In2, Out1, Out2 ] ( add(Message(mId, mContent), unsynchronized1), unsynchronized2 )
+        NI
+        
+    ##
+    
+    -- Synchronization on channel 1
+        In1 ? cmd [[ isSynchronise(cmd) ]]
+        >->
+        (
+            [[ unsynchronized1 == NoEvents ]] =>> Out1 ! Ack
+                >->
+                matrixServerRoom [ In1, In2, Out1, Out2 ] ( unsynchronized1, unsynchronized2 )
 
-			##
-			
-			[[ not(unsynchronized1 == NoEvents) ]] =>>
-			LET event = hd(unsynchronized1) IN
-			(
-				[[ isMessage(event) ]] =>>
-				Out1 ! NewMessage(mEventId(event), mContent(event))
-				>->
-				matrixServerRoom [ In1, In2, Out1, Out2 ] ( tl(unsynchronized1), unsynchronized2 )
-				
-				##
+            ##
+            
+            [[ not(unsynchronized1 == NoEvents) ]] =>>
+            LET event = hd(unsynchronized1) IN
+            (
+                [[ isMessage(event) ]] =>>
+                Out1 ! NewMessage(mEventId(event), mContent(event))
+                >->
+                matrixServerRoom [ In1, In2, Out1, Out2 ] ( tl(unsynchronized1), unsynchronized2 )
+                
+                ##
 
-				[[ isRedaction(event) ]] =>>
-				Out1 ! MessageRedacted(rEventId(event))
-				>->
-				matrixServerRoom [ In1, In2, Out1, Out2 ] ( tl(unsynchronized1), unsynchronized2 )
+                [[ isRedaction(event) ]] =>>
+                Out1 ! MessageRedacted(rEventId(event))
+                >->
+                matrixServerRoom [ In1, In2, Out1, Out2 ] ( tl(unsynchronized1), unsynchronized2 )
 
-			)			
-			NI
-		)
-		
-	##
-		
-	-- Synchronization on channel 2
-		In2 ? cmd [[ isSynchronise(cmd) ]]
-		>->
-		(
-			[[ unsynchronized2 == NoEvents ]] =>> Out2 ! Ack
-				>->
-				matrixServerRoom [ In1, In2, Out1, Out2 ] ( unsynchronized1, unsynchronized2 )
+            )			
+            NI
+        )
+        
+    ##
+        
+    -- Synchronization on channel 2
+        In2 ? cmd [[ isSynchronise(cmd) ]]
+        >->
+        (
+            [[ unsynchronized2 == NoEvents ]] =>> Out2 ! Ack
+                >->
+                matrixServerRoom [ In1, In2, Out1, Out2 ] ( unsynchronized1, unsynchronized2 )
 
-			##
-			
-			[[ not(unsynchronized2 == NoEvents) ]] =>>
-			LET event = hd(unsynchronized2) IN
-			(
-				[[ isMessage(event) ]] =>>
-				Out2 ! NewMessage(mEventId(event), mContent(event))
-				>->
-				matrixServerRoom [ In1, In2, Out1, Out2 ] ( unsynchronized1, tl(unsynchronized2) )
-				
-				##
+            ##
+            
+            [[ not(unsynchronized2 == NoEvents) ]] =>>
+            LET event = hd(unsynchronized2) IN
+            (
+                [[ isMessage(event) ]] =>>
+                Out2 ! NewMessage(mEventId(event), mContent(event))
+                >->
+                matrixServerRoom [ In1, In2, Out1, Out2 ] ( unsynchronized1, tl(unsynchronized2) )
+                
+                ##
 
-				[[ isRedaction(event) ]] =>>
-				Out2 ! MessageRedacted(rEventId(event))
-				>->
-				matrixServerRoom [ In1, In2, Out1, Out2 ] ( unsynchronized1, tl(unsynchronized2) )
+                [[ isRedaction(event) ]] =>>
+                Out2 ! MessageRedacted(rEventId(event))
+                >->
+                matrixServerRoom [ In1, In2, Out1, Out2 ] ( unsynchronized1, tl(unsynchronized2) )
 
-			)			
-			NI
-		)
+            )			
+            NI
+        )
 
-	-- Fallback cases: there was no I/O relevant for the state of the server room
+    -- Fallback cases: there was no I/O relevant for the state of the server room
 
-	##
-		In1 ? cmd [[ not(isSendMessage(cmd)) /\ not(isRedactMessage(cmd)) /\ not(isSynchronise(cmd)) ]]
-		>->
-		matrixServerRoom [ In1, In2, Out1, Out2 ] ( unsynchronized1, unsynchronized2 )
-	##
-		In2 ? cmd [[ not(isSendMessage(cmd)) /\ not(isRedactMessage(cmd)) /\ not(isSynchronise(cmd)) ]]
-		>->
-		matrixServerRoom [ In1, In2, Out1, Out2 ] ( unsynchronized1, unsynchronized2 )
-	##
-		Out1 ? res
-		>->
-		matrixServerRoom [ In1, In2, Out1, Out2 ] ( unsynchronized1, unsynchronized2 )
-	##
-		Out2 ? res
-		>->
-		matrixServerRoom [ In1, In2, Out1, Out2 ] ( unsynchronized1, unsynchronized2 )
+    ##
+        In1 ? cmd [[ not(isSendMessage(cmd)) /\ not(isRedactMessage(cmd)) /\ not(isSynchronise(cmd)) ]]
+        >->
+        matrixServerRoom [ In1, In2, Out1, Out2 ] ( unsynchronized1, unsynchronized2 )
+    ##
+        In2 ? cmd [[ not(isSendMessage(cmd)) /\ not(isRedactMessage(cmd)) /\ not(isSynchronise(cmd)) ]]
+        >->
+        matrixServerRoom [ In1, In2, Out1, Out2 ] ( unsynchronized1, unsynchronized2 )
+    ##
+        Out1 ? res
+        >->
+        matrixServerRoom [ In1, In2, Out1, Out2 ] ( unsynchronized1, unsynchronized2 )
+    ##
+        Out2 ? res
+        >->
+        matrixServerRoom [ In1, In2, Out1, Out2 ] ( unsynchronized1, unsynchronized2 )
 ENDDEF
 
 
@@ -472,21 +491,21 @@ ENDDEF
 -- Synchronizes on all channels.
 -------------------------------------------------------------------------
 PROCDEF matrix [ In1, In2  :: Cmd
-			   ; Out1, Out2 :: Res
-			   ]
-			   (
-				 username1, password1,
-				 username2, password2 :: String
-			   )
+               ; Out1, Out2 :: Res
+               ]
+               (
+                 username1, password1,
+                 username2, password2 :: String
+               )
  ::=
-	-- Setup clients
-	matrixSetup [ In1, In2, Out1, Out2 ] ( username1, password1, username2, password2 )
+    -- Setup clients
+    matrixSetup [ In1, In2, Out1, Out2 ] ( username1, password1, username2, password2 )
 
-	-- Synchronize over all channels
-	|[ In1, In2, Out1, Out2 ]|
+    -- Synchronize over all channels
+    |[ In1, In2, Out1, Out2 ]|
 
-	-- Setup server room
-	matrixServerRoom [ In1, In2, Out1, Out2 ] ( NoEvents, NoEvents )
+    -- Setup server room
+    matrixServerRoom [ In1, In2, Out1, Out2 ] ( NoEvents, NoEvents )
 
 ENDDEF
 
@@ -507,12 +526,12 @@ MODELDEF    Matrix
 
     BEHAVIOUR
         matrix  [
-				  In1, In2, Out1, Out2
-				]
-				(
-				  "Testuser1", "TestPassword1",
-				  "Testuser2", "TestPassword2"
-				)
+                  In1, In2, Out1, Out2
+                ]
+                (
+                  "Testuser1", "TestPassword1",
+                  "Testuser2", "TestPassword2"
+                )
 ENDDEF
 
 -------------------------------------------------------------------------
@@ -526,8 +545,8 @@ CNECTDEF Sut
 
     CHAN IN     Out1  HOST "localhost" PORT 7890
     DECODE      Out1  ! fromString(s) <- ? s
-	
-	CHAN OUT    In2   HOST "localhost" PORT 7891
+    
+    CHAN OUT    In2   HOST "localhost" PORT 7891
     ENCODE      In2   ? s -> ! toString(s)
 
     CHAN IN     Out2  HOST "localhost" PORT 7891
