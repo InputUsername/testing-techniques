@@ -41,6 +41,7 @@ class UserAndRoomManagement:
         self.rooms = dict()
         data['rooms'] = 0
         data['max_room_members'] = 0
+        data['public_rooms'] = 0
 
     def tearDownModel(self, data):
         """
@@ -142,6 +143,8 @@ class UserAndRoomManagement:
 
         self.rooms[room_name] = Room(user.username, room_name, is_private, room_id, set())
         data['rooms'] = int(data['rooms']) + 1
+        if not is_private:
+            data['public_rooms'] = int(data['public_rooms']) + 1
 
     def v_room_created(self, data):
         """
@@ -193,9 +196,20 @@ class UserAndRoomManagement:
     def v_room_joined(self, data):
         """
         Called when v_room_joined is visited.
+        Asserts that the room membership status in the model matches that
+        in Matrix itself.
         """
 
         for _room_name, room in self.rooms.items():
             data['max_room_members'] = max(int(data['max_room_members']), len(room.members))
 
         assert(int(data['max_room_members']) != 0)
+
+        for username, user in self.users.items():
+            user_rooms = set(joined_rooms(user.access_token)['joined_rooms'])
+
+            for _room_name, room in self.rooms.items():
+                # If a user is in a room according to the model,
+                # the room should be in the list of joined rooms for that user.
+                if username in room.members:
+                    assert room.id in user_rooms

@@ -104,7 +104,8 @@
 					"id": "e13",
 					"name": "e_join_room",
 					"sourceVertexId": "v4",
-					"targetVertexId": "v4"
+					"targetVertexId": "v4",
+					"guard": "public_rooms > 0"
 				},
 				{
 					"id": "e14",

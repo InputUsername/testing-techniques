@@ -131,6 +131,13 @@ def list_room(room_id):
 
 
 """
+10.4.1   GET /_matrix/client/r0/joined_rooms
+"""
+def joined_rooms(access_token):
+    return get_request("/_matrix/client/r0/joined_rooms", access_token).json()
+
+
+"""
 Execute a POST request towards the local matrix server with an optional access token.
 """
 def post_request(endpoint, body, access_token=None):
