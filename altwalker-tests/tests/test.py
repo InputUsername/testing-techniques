@@ -22,7 +22,16 @@ class Room:
 
 
 class UserAndRoomManagement:
+    """
+    Models user and room management in Matrix by randomly registering users,
+    logging them in, creating rooms, and letting users join rooms.
+    """
+
     def setUpModel(self, data):
+        """
+        Called on model creation.
+        """
+
         self.users = dict()
         data['users_registered'] = 0
 
@@ -34,14 +43,28 @@ class UserAndRoomManagement:
         data['max_room_members'] = 0
 
     def tearDownModel(self, data):
+        """
+        Called on model destruction.
+        """
+
         print(self.users)
         print(self.logged_in)
         print(data)
 
     def v_start(self, _data):
+        """
+        Called when the start state is visited.
+        This does nothing.
+        """
+
         pass
 
     def e_register(self, data):
+        """
+        Called when e_register is followed.
+        Creates a user in Matrix and in the model.
+        """
+
         username = 'altwalker_user_' + str(random.randint(0, 999_999_999))
         password = 'password123'
 
@@ -51,12 +74,23 @@ class UserAndRoomManagement:
         data['users_registered'] = int(data['users_registered']) + 1
 
     def v_registered(self, data):
+        """
+        Called when v_registered is visited.
+        This asserts that the corresponding username is not available anymore,
+        ie. that the user has been registered.
+        """
+
         assert int(data['users_registered']) != 0
 
         for username, _user in self.users.items():
             assert not available(username)
 
     def e_login(self, data):
+        """
+        Called when e_login is followed.
+        Logs a user in using the dedicated Matrix API endpoint.
+        """
+
         for username, user in self.users.items():
             if username not in self.logged_in:
                 access_token = login(username, user.password)
@@ -66,6 +100,13 @@ class UserAndRoomManagement:
                 break
 
     def e_registered_login(self, data):
+        """
+        Called when e_registered_login is followed.
+        On registration, Matrix already returns an access token,
+        so effectively the user is logged in. We model this by
+        an edge that does nothing except update the login status in the model.
+        """
+
         for username, user in self.users.items():
             if username not in self.logged_in:
                 self.logged_in[username] = user
@@ -73,6 +114,11 @@ class UserAndRoomManagement:
                 break
 
     def v_logged_in(self, data):
+        """
+        Called when v_login is visited.
+        This asserts that every user in the model actually exists.
+        """
+
         assert int(data['users_registered']) != 0
         assert int(data['users_logged_in']) != 0
 
@@ -82,6 +128,11 @@ class UserAndRoomManagement:
             assert response.json()["user_id"] == user.id
 
     def e_create_room(self, data):
+        """
+        Called when e_create_room is followed.
+        Creates a room in Matrix and in the model.
+        """
+
         room_name = 'altwalker_room_' + str(random.randint(0, 999_999_999))
         is_private = bool(random.getrandbits(1))
         user = random.choice(list(self.logged_in.values()))
@@ -92,6 +143,12 @@ class UserAndRoomManagement:
         data['rooms'] = int(data['rooms']) + 1
 
     def v_room_created(self, data):
+        """
+        Called when v_room_created is visited.
+        This asserts that every room in the model actually exists
+        and has the right properties (access rights).
+        """
+
         assert int(data['rooms']) != 0
 
         for _room_name, room in self.rooms.items():
@@ -101,6 +158,12 @@ class UserAndRoomManagement:
             assert is_private == room.is_private
 
     def e_join_room(self, data):
+        """
+        Called when e_join_room is followed.
+        This causes a user that is not yet a member of the room to join it.
+        (Only public rooms can be joined.)
+        """
+
         for _room_name, room in self.rooms.items():
             if room.is_private:
                 continue
@@ -114,6 +177,13 @@ class UserAndRoomManagement:
                     break
 
     def e_creator_join(self, data):
+        """
+        Called when e_creator_join is followed.
+        Similar to user creation returning a login token, when a user creates
+        a room they also join that room. We model this by an edge that does
+        nothing except update the room creator's member status in the model.
+        """
+
         for _room_name, room in self.rooms.items():
             for username, user in self.users.items():
                 if username == room.creator:
@@ -122,4 +192,8 @@ class UserAndRoomManagement:
                     break
 
     def v_room_joined(self, data):
+        """
+        Called when v_room_joined is visited.
+        """
+
         assert(int(data['max_room_members']) != 0)
