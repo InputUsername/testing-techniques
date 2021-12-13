@@ -13,6 +13,8 @@ HOST = '0.0.0.0'
 PORT = int(sys.argv[1])
 # PORT = 7891
 
+last_redacted_before_sync_id = None
+
 # Store the user id associated with an access token
 user_dict = dict()
 
@@ -119,6 +121,8 @@ def process(message, sockfile):
 
     # Synchronise and return latest relevant event or ack if none are available
     elif command == 'Synchronise':
+        global last_redacted_before_sync_id
+
         access_token = arguments[0]
         room_id = arguments[1]
 
@@ -137,7 +141,7 @@ def process(message, sockfile):
         data = sync_response.json()
 
         try:
-            synchronization_dict[access_token] = data['next_batch']
+            synchronization_dict[access_token] = data['next_batch']            
             sender_id = user_dict[access_token]
 
             events = data['rooms']['join'][room_id]['timeline']['events']
@@ -145,18 +149,51 @@ def process(message, sockfile):
                 message_type = event['type']
                 sender = event['sender']
                 if message_type == 'm.room.message' and not sender == sender_id:
-                    if event['content']['msgtype'] == 'm.text':
-                        event_id = escape_event_id(event['event_id'])
-                        content = event['content']['body']
-                        unsynchronized_dict[access_token].append(f'NewMessage("{event_id}", "{content}")')
+                    event_id = escape_event_id(event['event_id'])
+                    try:
+                        if event['content']['msgtype'] == 'm.text':
+                            content = event['content']['body']
+                            unsynchronized_dict[access_token].append(f'NewMessage("{event_id}", "{content}")')
+                    
+                    # This is the case when the message was redacted and we cannot access the contents.
+                    except KeyError:
+                        event_details = get_event(access_token, room_id, event_id).json()
+
+                        if event_details['type'] != 'm.room.message':
+                            print('The requested event is not a message, either Matrix or this adapter is bugged...')
+                            return
+
+                        # We didn't synchronize before we got the message in our local store. We can no longer
+                        # retrieve the contents of the message.
+                        last_redacted_before_sync_id = event_id
 
                 elif message_type == 'm.room.redaction' and not sender == sender_id:
                     redact_id = escape_event_id(event['redacts'])
-                    unsynchronized_dict[access_token].append(f'MessageRedacted("{redact_id}")')
 
-        except KeyError:
-            # Probably should log the actual error here. For now assume that we
-            # had no body, thus acknowledge (nothing to do.)
+                    message_was_synched = True
+                    id_to_remove = None
+
+                    # This redaction event needs to be filtered out: we did not know of the existence of this message
+                    # anyhow.
+                    if last_redacted_before_sync_id == redact_id:
+                        print('Was redacted before sync {redact_id}')
+                        message_was_synched = False
+
+                    # If the message is still in our local store, we need to remove it.
+                    for idx, val in enumerate(unsynchronized_dict[access_token]):
+                        if redact_id in val:
+                            message_was_synched = False
+                            id_to_remove = idx
+
+                    # We already know of this message, so send out the redaction event.
+                    if message_was_synched:
+                        unsynchronized_dict[access_token].append(f'MessageRedacted("{redact_id}")')
+
+                    # Remove the send message as it is no longer useful.
+                    if id_to_remove:
+                        unsynchronized_dict[access_token].pop(id_to_remove)
+
+        except KeyError as e:
             pass
 
         # No unsychronized events, Acknowledge

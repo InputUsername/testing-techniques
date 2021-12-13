@@ -93,6 +93,14 @@ def sync(access_token, since = None):
     return response
 
 """
+9.5.1   GET /_matrix/client/r0/rooms/{roomId}/event/{eventId}
+"""
+def get_event(access_token, room_id, event_id):
+    response = get_request(f"/_matrix/client/r0/rooms/{room_id}/event/{event_id}", access_token)
+
+    return response
+
+"""
 9.5.6   GET /_matrix/client/r0/rooms/{roomId}/messages
 Attempts to get a list of messages and state events for a room
 """
