@@ -1,0 +1,45 @@
+-------------------------------------------------------------------------
+-- Redact a message for every three messages that were sent
+
+-- torxakis Matrix.txs MatrixPurp.txs
+-- tester Matrix PurpMessageRedaction Sut
+-------------------------------------------------------------------------
+
+PROCDEF redact3 [ In1, In2 :: Cmd; Out1, Out2 :: Res ] ( messagesSent :: Int; redacted :: Bool ) HIT
+ ::=
+
+    In1 ? cmd 	[[ ( isRedactMessage(cmd) /\ (messagesSent % 3 == 0 /\ not(redacted)) ) ]] >-> Out1 ? res >-> redact3 [ In1, In2, Out1, Out2 ] ( messagesSent, True )
+    
+    ##
+    
+    In1 ? cmd [[ ( isSendMessage(cmd) /\ (not ( (messagesSent % 3 == 0) /\ not(redacted) ) ) ) ]] >-> Out1 ? res >-> redact3 [ In1, In2, Out1, Out2 ] ( messagesSent + 1, False )
+    
+    ##
+    
+    In2 ? cmd [[ ( isSendMessage(cmd) /\ (not ( (messagesSent % 3 == 0) /\ not(redacted) ) ) ) ]] >-> Out2 ? res >-> redact3 [ In1, In2, Out1, Out2 ] ( messagesSent + 1, False )
+    
+    ##
+    
+    In1 ? cmd [[ not(isSendMessage(cmd)) /\ not(isRedactMessage(cmd)) ]] >-> Out1 ? res >-> redact3 [ In1, In2, Out1, Out2 ] ( messagesSent, redacted )
+    
+    ##
+    
+    In2 ? cmd [[ not(isSendMessage(cmd)) ]] >-> Out2 ? res >-> redact3 [ In1, In2, Out1, Out2 ] ( messagesSent, redacted )
+    
+    ##
+ 
+    Out1 ? res >-> redact3 [ In1, In2, Out1, Out2 ] ( messagesSent, redacted )
+    
+    ##
+ 
+    Out2 ? res >-> redact3 [ In1, In2, Out1, Out2 ] ( messagesSent, redacted )
+
+ENDDEF
+
+PURPDEF PurpMessageRedaction
+ ::=
+        CHAN IN In1, In2
+        CHAN OUT Out1, Out2
+        
+        GOAL redact3goal ::= redact3 [ In1, In2, Out1, Out2 ] ( 1, False )
+ENDDEF

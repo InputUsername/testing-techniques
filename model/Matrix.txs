@@ -9,8 +9,8 @@ TYPEDEF Cmd ::=
     | CreateRoom 	{ crRoomName, crIsPrivate, crAccessToken :: String }
     | JoinRoom 		{ jrAccessToken, jrRoomId :: String }
     | SendMessage 	{ smAccessToken, smRoomId :: String; smTxn :: Int; smContent :: String }
-    | RedactMessage { rmAccessToken, rmRoomId :: String; rmTxn :: Int; rmEventId :: String }
-    | Synchronise   { sAccessToken, sRoomId :: String }
+    | RedactMessage	{ rmAccessToken, rmRoomId :: String; rmTxn :: Int; rmEventId :: String }
+    | Synchronise	{ sAccessToken, sRoomId :: String }
 ENDDEF
 
 -- Responses that may be received, as 'output' from Matrix
@@ -272,13 +272,7 @@ PROCDEF matrixMessaging [ In :: Cmd
                 =>>
                 -- Redaction, but we don't have messages
                     In ? cmd  [[ IF (isRedactMessage(cmd) /\ isNoMessages(localMessages))
-                                 THEN (rmAccessToken(cmd) == accessToken)
-                                       /\
-                                       (rmRoomId(cmd) == roomId)
-                                       /\
-                                       (rmTxn(cmd) == txn)
-                                       /\ 
-                                       idOccurs(rmEventId(cmd), localMessages)
+                                 THEN False
                                  ELSE False
                                  FI
                               ]]
@@ -362,8 +356,8 @@ PROCDEF matrixServerRoom [ In1, In2  :: Cmd
                          ; Out1, Out2 :: Res
                          ]
                          (
-                          unsynchronized1, 
-                          unsynchronized2 :: EventList
+                           messages :: MessageList
+                         ; unsynchronized1, unsynchronized2 :: EventList
                          )
  ::=
     -- Message sent from channel 1
@@ -371,18 +365,18 @@ PROCDEF matrixServerRoom [ In1, In2  :: Cmd
         >->
         Out1 ? res [[ isEventId(res) ]]
         >->
-        LET mContent = smContent(cmd); mId = eiId(res)  IN
-            matrixServerRoom [ In1, In2, Out1, Out2 ] ( unsynchronized1, add(Message(mId, mContent), unsynchronized2) )
+        LET mTxn = smTxn(cmd); mContent = smContent(cmd); mId = eiId(res)  IN
+            matrixServerRoom [ In1, In2, Out1, Out2 ] ( add(Message(mTxn, mId, mContent), messages), unsynchronized1, add(Message(mId, mContent), unsynchronized2) )
         NI
 
     ##
     
     -- Message redacted from channel 1
-        In1 ? cmd   [[ isRedactMessage(cmd) ]]
+        In1 ? cmd   [[ isRedactMessage(cmd) /\ not(isNoMessages(messages)) ]]
         >->
         Out1 ! Ack
         >->
-        matrixServerRoom [ In1, In2, Out1, Out2 ] ( unsynchronized1, add(Redaction(rmEventId(cmd)), unsynchronized2) )
+        matrixServerRoom [ In1, In2, Out1, Out2 ] ( remove(rmEventId(cmd), messages), unsynchronized1, add(Redaction(rmEventId(cmd)), unsynchronized2) )
     
     ##
 
@@ -391,8 +385,8 @@ PROCDEF matrixServerRoom [ In1, In2  :: Cmd
         >->
         Out2 ? res [[ isEventId(res) ]]
         >->
-        LET mContent = smContent(cmd); mId = eiId(res)  IN
-            matrixServerRoom [ In1, In2, Out1, Out2 ] ( add(Message(mId, mContent), unsynchronized1), unsynchronized2 )
+        LET mTxn = smTxn(cmd); mContent = smContent(cmd); mId = eiId(res)  IN
+            matrixServerRoom [ In1, In2, Out1, Out2 ] ( add(Message(mTxn, mId, mContent), messages), add(Message(mId, mContent), unsynchronized1), unsynchronized2 )
         NI
         
     ##
@@ -403,7 +397,7 @@ PROCDEF matrixServerRoom [ In1, In2  :: Cmd
         (
             [[ unsynchronized1 == NoEvents ]] =>> Out1 ! Ack
                 >->
-                matrixServerRoom [ In1, In2, Out1, Out2 ] ( unsynchronized1, unsynchronized2 )
+                matrixServerRoom [ In1, In2, Out1, Out2 ] ( messages, unsynchronized1, unsynchronized2 )
 
             ##
             
@@ -413,14 +407,14 @@ PROCDEF matrixServerRoom [ In1, In2  :: Cmd
                 [[ isMessage(event) ]] =>>
                 Out1 ! NewMessage(mEventId(event), mContent(event))
                 >->
-                matrixServerRoom [ In1, In2, Out1, Out2 ] ( tl(unsynchronized1), unsynchronized2 )
+                matrixServerRoom [ In1, In2, Out1, Out2 ] ( messages, tl(unsynchronized1), unsynchronized2 )
                 
                 ##
 
                 [[ isRedaction(event) ]] =>>
                 Out1 ! MessageRedacted(rEventId(event))
                 >->
-                matrixServerRoom [ In1, In2, Out1, Out2 ] ( tl(unsynchronized1), unsynchronized2 )
+                matrixServerRoom [ In1, In2, Out1, Out2 ] ( messages, tl(unsynchronized1), unsynchronized2 )
 
             )			
             NI
@@ -434,7 +428,7 @@ PROCDEF matrixServerRoom [ In1, In2  :: Cmd
         (
             [[ unsynchronized2 == NoEvents ]] =>> Out2 ! Ack
                 >->
-                matrixServerRoom [ In1, In2, Out1, Out2 ] ( unsynchronized1, unsynchronized2 )
+                matrixServerRoom [ In1, In2, Out1, Out2 ] ( messages, unsynchronized1, unsynchronized2 )
 
             ##
             
@@ -444,16 +438,16 @@ PROCDEF matrixServerRoom [ In1, In2  :: Cmd
                 [[ isMessage(event) ]] =>>
                 Out2 ! NewMessage(mEventId(event), mContent(event))
                 >->
-                matrixServerRoom [ In1, In2, Out1, Out2 ] ( unsynchronized1, tl(unsynchronized2) )
+                matrixServerRoom [ In1, In2, Out1, Out2 ] ( messages, unsynchronized1, tl(unsynchronized2) )
                 
                 ##
 
                 [[ isRedaction(event) ]] =>>
                 Out2 ! MessageRedacted(rEventId(event))
                 >->
-                matrixServerRoom [ In1, In2, Out1, Out2 ] ( unsynchronized1, tl(unsynchronized2) )
+                matrixServerRoom [ In1, In2, Out1, Out2 ] ( messages, unsynchronized1, tl(unsynchronized2) )
 
-            )			
+            )
             NI
         )
 
@@ -462,19 +456,19 @@ PROCDEF matrixServerRoom [ In1, In2  :: Cmd
     ##
         In1 ? cmd [[ not(isSendMessage(cmd)) /\ not(isRedactMessage(cmd)) /\ not(isSynchronise(cmd)) ]]
         >->
-        matrixServerRoom [ In1, In2, Out1, Out2 ] ( unsynchronized1, unsynchronized2 )
+        matrixServerRoom [ In1, In2, Out1, Out2 ] ( messages, unsynchronized1, unsynchronized2 )
     ##
         In2 ? cmd [[ not(isSendMessage(cmd)) /\ not(isRedactMessage(cmd)) /\ not(isSynchronise(cmd)) ]]
         >->
-        matrixServerRoom [ In1, In2, Out1, Out2 ] ( unsynchronized1, unsynchronized2 )
+        matrixServerRoom [ In1, In2, Out1, Out2 ] ( messages, unsynchronized1, unsynchronized2 )
     ##
         Out1 ? res
         >->
-        matrixServerRoom [ In1, In2, Out1, Out2 ] ( unsynchronized1, unsynchronized2 )
+        matrixServerRoom [ In1, In2, Out1, Out2 ] ( messages, unsynchronized1, unsynchronized2 )
     ##
         Out2 ? res
         >->
-        matrixServerRoom [ In1, In2, Out1, Out2 ] ( unsynchronized1, unsynchronized2 )
+        matrixServerRoom [ In1, In2, Out1, Out2 ] ( messages, unsynchronized1, unsynchronized2 )
 ENDDEF
 
 
@@ -505,7 +499,7 @@ PROCDEF matrix [ In1, In2  :: Cmd
     |[ In1, In2, Out1, Out2 ]|
 
     -- Setup server room
-    matrixServerRoom [ In1, In2, Out1, Out2 ] ( NoEvents, NoEvents )
+    matrixServerRoom [ In1, In2, Out1, Out2 ] ( NoMessages, NoEvents, NoEvents )
 
 ENDDEF
 
