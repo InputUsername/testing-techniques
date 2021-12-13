@@ -171,7 +171,7 @@ def process(message, sockfile):
                     redact_id = escape_event_id(event['redacts'])
 
                     message_was_synched = True
-                    id_to_remove = None
+                    id_to_remove = -1
 
                     # This redaction event needs to be filtered out: we did not know of the existence of this message
                     # anyhow.
@@ -182,6 +182,7 @@ def process(message, sockfile):
                     # If the message is still in our local store, we need to remove it.
                     for idx, val in enumerate(unsynchronized_dict[access_token]):
                         if redact_id in val:
+                            print(f'Found redact_id in local store, removing at index {idx}')
                             message_was_synched = False
                             id_to_remove = idx
 
@@ -190,7 +191,7 @@ def process(message, sockfile):
                         unsynchronized_dict[access_token].append(f'MessageRedacted("{redact_id}")')
 
                     # Remove the send message as it is no longer useful.
-                    if id_to_remove:
+                    if id_to_remove > -1:
                         unsynchronized_dict[access_token].pop(id_to_remove)
 
         except KeyError as e:
