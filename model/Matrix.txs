@@ -108,6 +108,18 @@ FUNCDEF idOccurs ( id :: String; messages :: MessageList ) :: Bool
     FI
 ENDDEF
 
+-- Lookup a message at a specific index
+FUNCDEF lookup ( index :: Int; messages :: MessageList ) :: Message
+ ::=
+    IF isNoMessages(messages)
+    THEN Message(-1, "INVALID", "UNKNOWN")
+    ELSE
+        IF index == 0
+        THEN hd(messages)
+        ELSE lookup(index - 1, tl(messages))
+        FI
+    FI
+ENDDEF
 
 -------------------------------------------------------------------------
 -- FUNCDEF [on EventList]
@@ -119,6 +131,23 @@ FUNCDEF add ( e :: Event; events :: EventList ) :: EventList
     IF   isNoEvents(events)
     THEN Events(e, NoEvents)
     ELSE Events(hd(events), add(e, tl(events)))
+    FI
+ENDDEF
+
+
+FUNCDEF addIfMessageSynced ( e :: Event; events :: EventList ) :: EventList
+ ::=
+    IF   isNoEvents(events)
+    THEN Events(e, NoEvents)
+    ELSE 
+        IF isMessage(hd(events))
+        THEN
+            IF mEventId(hd(events)) == rEventId(e)
+            THEN tl(events)
+            ELSE Events(hd(events), addIfMessageSynced(e, tl(events)))
+            FI
+        ELSE Events(hd(events), addIfMessageSynced(e, tl(events)))
+        FI
     FI
 ENDDEF
 
@@ -376,7 +405,7 @@ PROCDEF matrixServerRoom [ In1, In2  :: Cmd
         >->
         Out1 ! Ack
         >->
-        matrixServerRoom [ In1, In2, Out1, Out2 ] ( remove(rmEventId(cmd), messages), unsynchronized1, add(Redaction(rmEventId(cmd)), unsynchronized2) )
+        matrixServerRoom [ In1, In2, Out1, Out2 ] ( remove(rmEventId(cmd), messages), unsynchronized1, addIfMessageSynced(Redaction(rmEventId(cmd)), unsynchronized2) )
     
     ##
 
@@ -456,16 +485,12 @@ PROCDEF matrixServerRoom [ In1, In2  :: Cmd
     ##
         In1 ? cmd [[ not(isSendMessage(cmd)) /\ not(isRedactMessage(cmd)) /\ not(isSynchronise(cmd)) ]]
         >->
-        matrixServerRoom [ In1, In2, Out1, Out2 ] ( messages, unsynchronized1, unsynchronized2 )
-    ##
-        In2 ? cmd [[ not(isSendMessage(cmd)) /\ not(isRedactMessage(cmd)) /\ not(isSynchronise(cmd)) ]]
-        >->
-        matrixServerRoom [ In1, In2, Out1, Out2 ] ( messages, unsynchronized1, unsynchronized2 )
-    ##
         Out1 ? res
         >->
         matrixServerRoom [ In1, In2, Out1, Out2 ] ( messages, unsynchronized1, unsynchronized2 )
     ##
+        In2 ? cmd [[ not(isSendMessage(cmd)) /\ not(isRedactMessage(cmd)) /\ not(isSynchronise(cmd)) ]]
+        >->
         Out2 ? res
         >->
         matrixServerRoom [ In1, In2, Out1, Out2 ] ( messages, unsynchronized1, unsynchronized2 )

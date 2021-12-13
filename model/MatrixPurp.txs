@@ -5,34 +5,50 @@
 -- tester Matrix PurpMessageRedaction Sut
 -------------------------------------------------------------------------
 
-PROCDEF redact3 [ In1, In2 :: Cmd; Out1, Out2 :: Res ] ( messagesSent :: Int; redacted :: Bool ) HIT
+PROCDEF redact3after9 [ In1, In2 :: Cmd; Out1, Out2 :: Res ] ( messages :: MessageList; messagesSent, iteration :: Int; redacted :: Bool ) HIT
  ::=
 
-    In1 ? cmd 	[[ ( isRedactMessage(cmd) /\ (messagesSent % 3 == 0 /\ not(redacted)) ) ]] >-> Out1 ? res >-> redact3 [ In1, In2, Out1, Out2 ] ( messagesSent, True )
+    [[ (messagesSent % 3 == 0 /\ not(redacted) ) ]] =>>
+    (
+        -- Don't start redacting unless we have reached 9 sent messages
+        [[ messagesSent <= 8 ]] =>> redact3after9 [ In1, In2, Out1, Out2 ] ( messages, messagesSent, iteration + 1, True )
+    
+        ##
+    
+        [[ messagesSent >= 9 ]] =>>
+    
+        In1 ? cmd 	[[ IF ( isRedactMessage(cmd) )
+                       THEN rmEventId(cmd) == eid(lookup(2 * iteration, messages))
+                       ELSE False
+                       FI
+                    ]]
+            >->
+            Out1 ! Ack
+            >-> redact3after9 [ In1, In2, Out1, Out2 ] ( remove(rmEventId(cmd), messages), messagesSent, iteration + 1, True )
+    )
     
     ##
-    
-    In1 ? cmd [[ ( isSendMessage(cmd) /\ (not ( (messagesSent % 3 == 0) /\ not(redacted) ) ) ) ]] >-> Out1 ? res >-> redact3 [ In1, In2, Out1, Out2 ] ( messagesSent + 1, False )
-    
-    ##
-    
-    In2 ? cmd [[ ( isSendMessage(cmd) /\ (not ( (messagesSent % 3 == 0) /\ not(redacted) ) ) ) ]] >-> Out2 ? res >-> redact3 [ In1, In2, Out1, Out2 ] ( messagesSent + 1, False )
-    
-    ##
-    
-    In1 ? cmd [[ not(isSendMessage(cmd)) /\ not(isRedactMessage(cmd)) ]] >-> Out1 ? res >-> redact3 [ In1, In2, Out1, Out2 ] ( messagesSent, redacted )
+
+    In1 ? cmd [[ ( isSendMessage(cmd) /\ ( not(messagesSent % 3 == 0) \/ redacted ) ) ]] 
+        >-> 
+        Out1 ? res [[ isEventId(res) ]]
+        >-> redact3after9 [ In1, In2, Out1, Out2 ] ( add(Message(smTxn(cmd), eiId(res), smContent(cmd)), messages), messagesSent + 1, iteration,  False )
     
     ##
-    
-    In2 ? cmd [[ not(isSendMessage(cmd)) ]] >-> Out2 ? res >-> redact3 [ In1, In2, Out1, Out2 ] ( messagesSent, redacted )
-    
+
+
+    In2 ? cmd [[ ( isSendMessage(cmd) /\ ( not(messagesSent % 3 == 0) \/ redacted ) ) ]] 
+        >-> 
+        Out2 ? res [[ isEventId(res) ]]
+        >-> redact3after9 [ In1, In2, Out1, Out2 ] (  add(Message(smTxn(cmd), eiId(res), smContent(cmd)), messages), messagesSent + 1, iteration,  False )
+
     ##
- 
-    Out1 ? res >-> redact3 [ In1, In2, Out1, Out2 ] ( messagesSent, redacted )
-    
+
+    In1 ? cmd [[ not(isSendMessage(cmd)) /\ not(isRedactMessage(cmd)) ]] >-> Out1 ? res >-> redact3after9 [ In1, In2, Out1, Out2 ] ( messages, messagesSent, iteration, redacted )
+
     ##
- 
-    Out2 ? res >-> redact3 [ In1, In2, Out1, Out2 ] ( messagesSent, redacted )
+
+    In2 ? cmd [[ not(isSendMessage(cmd)) ]] >-> Out2 ? res >-> redact3after9 [ In1, In2, Out1, Out2 ] ( messages, messagesSent, iteration, redacted )
 
 ENDDEF
 
@@ -40,6 +56,6 @@ PURPDEF PurpMessageRedaction
  ::=
         CHAN IN In1, In2
         CHAN OUT Out1, Out2
-        
-        GOAL redact3goal ::= redact3 [ In1, In2, Out1, Out2 ] ( 1, False )
+
+        GOAL redact3after9goal ::= redact3after9 [ In1, In2, Out1, Out2 ] ( NoMessages, 0, 1, True )
 ENDDEF
