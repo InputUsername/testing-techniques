@@ -176,7 +176,7 @@ def process(message, sockfile):
                     # This redaction event needs to be filtered out: we did not know of the existence of this message
                     # anyhow.
                     if last_redacted_before_sync_id == redact_id:
-                        print('Was redacted before sync {redact_id}')
+                        print(f'Was redacted before sync {redact_id}')
                         message_was_synched = False
 
                     # If the message is still in our local store, we need to remove it.

@@ -1,25 +1,5 @@
 TXS >>  TorXakis :: Model-Based Testing
 
-TXS >>  txsserver starting: "kubernetes.docker.internal" : 52068
-TXS >>  Undefined Process at <no location>: [NoDefinition at line 591 and column 45: No matching process definition found for 'redact3[..](..)': []]
-TXS >>  CallStack (from HasCallStack):
-TXS >>  error, called at src\TorXakis\Compiler.hs:175:25 in txs-compiler-0.1.0.0-5W17IXBVyzQ39twEH6isyB:TorXakis.Compiler
-TXS >> test 500
-TXS >>  NoOp : No action
-TXS >> tester Matrix PurpMessageRedaction Sut
-TXS >>  NoOp : No action
-TXS >>
-Received `Ctrl-C`: quitting.
-
-TXS >>  TorXakis :: Model-Based Testing  << End
-
-
-C:\Users\Ties\Documents\model>
-
-C:\Users\Ties\Documents\model>torxakis Matrix.txs MatrixPurp.txs
-
-TXS >>  TorXakis :: Model-Based Testing
-
 TXS >>  txsserver starting: "kubernetes.docker.internal" : 52070
 TXS >>  Solver "z3" initialized : Z3 [4.8.5]
 TXS >>  TxsCore initialized
