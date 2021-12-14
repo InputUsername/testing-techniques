@@ -1,4 +1,5 @@
 import random
+from datetime import datetime
 from dataclasses import dataclass
 
 from .base import *
@@ -67,7 +68,7 @@ class UserAndRoomManagement:
         Creates a user in Matrix and in the model.
         """
 
-        username = 'altwalker_user_' + str(random.randint(0, 999_999_999))
+        username = 'altwalker_user_' + str(datetime.now().strftime('%s')) + str(random.randint(0, 999_999_999))
         password = 'password123'
 
         registration_access_token, user_id = register(username, password)
@@ -135,7 +136,7 @@ class UserAndRoomManagement:
         Creates a room in Matrix and in the model.
         """
 
-        room_name = 'altwalker_room_' + str(random.randint(0, 999_999_999))
+        room_name = 'altwalker_room_' + str(datetime.now().strftime('%s')) + str(random.randint(0, 999_999_999))
         is_private = bool(random.getrandbits(1))
         user = random.choice(list(self.logged_in.values()))
 
