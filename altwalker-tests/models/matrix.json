@@ -1,0 +1,152 @@
+{
+	"name": "Matrix",
+	"models": [
+		{
+			"name": "UserAndRoomManagement",
+			"generator": "random(edge_coverage(100) && vertex_coverage(100))",
+			"startElementId": "v0",
+			"vertices": [
+				{
+					"id": "v0",
+					"name": "v_start"
+				},
+				{
+					"id": "v1",
+					"name": "v_registered"
+				},
+				{
+					"id": "v2",
+					"name": "v_logged_in"
+				},
+				{
+					"id": "v3",
+					"name": "v_room_created"
+				},
+				{
+					"id": "v4",
+					"name": "v_room_joined",
+					"sharedState": "messaging"
+				}
+			],
+			"edges": [
+				{
+					"id": "e0",
+					"name": "e_register",
+					"sourceVertexId": "v0",
+					"targetVertexId": "v1"
+				},
+				{
+					"id": "e1",
+					"name": "e_register",
+					"sourceVertexId": "v1",
+					"targetVertexId": "v1"
+				},
+				{
+					"id": "e2",
+					"name": "e_login",
+					"sourceVertexId": "v1",
+					"targetVertexId": "v2",
+					"guard": "users_logged_in < users_registered"
+				},
+				{
+					"id": "e5",
+					"name": "e_login",
+					"sourceVertexId": "v2",
+					"targetVertexId": "v2",
+					"guard": "users_logged_in < users_registered"
+				},
+				{
+					"id": "e7",
+					"name": "e_register",
+					"sourceVertexId": "v2",
+					"targetVertexId": "v1"
+				},
+				{
+					"id": "e8",
+					"name": "e_create_room",
+					"sourceVertexId": "v2",
+					"targetVertexId": "v3"
+				},
+				{
+					"id": "e9",
+					"name": "e_create_room",
+					"sourceVertexId": "v3",
+					"targetVertexId": "v3"
+				},
+				{
+					"id": "e10",
+					"name": "e_register",
+					"sourceVertexId": "v3",
+					"targetVertexId": "v1"
+				},
+				{
+					"id": "e11",
+					"name": "e_login",
+					"sourceVertexId": "v3",
+					"targetVertexId": "v2",
+					"guard": "users_logged_in < users_registered"
+				},
+				{
+					"id": "e12",
+					"name": "e_join_room",
+					"sourceVertexId": "v3",
+					"targetVertexId": "v4",
+					"guard": "possible_joins > 0"
+				},
+				{
+					"id": "e14",
+					"name": "e_join_room",
+					"sourceVertexId": "v4",
+					"targetVertexId": "v4",
+					"guard": "possible_joins > 0"
+				},
+				{
+					"id": "e16",
+					"name": "e_create_room",
+					"sourceVertexId": "v4",
+					"targetVertexId": "v3"
+				},
+				{
+					"id": "e17",
+					"name": "e_register",
+					"sourceVertexId": "v4",
+					"targetVertexId": "v1"
+				},
+				{
+					"id": "e18",
+					"name": "e_login",
+					"sourceVertexId": "v4",
+					"targetVertexId": "v2",
+					"guard": "users_logged_in < users_registered"
+				}
+			]
+		},
+		{
+			"name": "Messaging",
+			"generator":"random(edge_coverage(100) && vertex_coverage(100))",
+			"startElementId": "m_v0",
+			"vertices": [
+				{
+					"id": "m_v0",
+					"name": "v_in_room",
+					"sharedState": "messaging"
+				}
+			],
+			"edges": [
+				{
+					"id": "m_e0",
+					"name": "e_send_message",
+					"sourceVertexId": "m_v0",
+					"targetVertexId": "m_v0"
+				},
+				{
+					"id": "m_e1",
+					"name": "e_redact_message",
+					"sourceVertexId": "m_v0",
+					"targetVertexId": "m_v0",
+					"guard": "room_has_messages"
+				}
+			]
+		}
+	]
+}

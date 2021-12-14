@@ -6,6 +6,7 @@ services:
       - ./testing:/app/testing/
       - ./adapter:/app/adapter/
       - ./model:/app/model/
+      - ./altwalker-tests:/app/altwalker-tests/
     depends_on:
       - synapse
   synapse:

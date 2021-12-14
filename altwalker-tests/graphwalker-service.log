@@ -1,0 +1,226 @@
+23:17:46.971 [main] DEBUG org.graphwalker.io.factory.json.JsonContextFactory - {	"name": "Matrix",	"models": [		{			"name": "UserAndRoomManagement",			"generator": "random(edge_coverage(100) && vertex_coverage(100))",			"startElementId": "v0",			"vertices": [				{					"id": "v0",					"name": "v_start"				},				{					"id": "v1",					"name": "v_registered"				},				{					"id": "v2",					"name": "v_logged_in"				},				{					"id": "v3",					"name": "v_room_created"				},				{					"id": "v4",					"name": "v_room_joined",					"sharedState": "messaging"				}			],			"edges": [				{					"id": "e0",					"name": "e_register",					"sourceVertexId": "v0",					"targetVertexId": "v1"				},				{					"id": "e1",					"name": "e_register",					"sourceVertexId": "v1",					"targetVertexId": "v1"				},				{					"id": "e2",					"name": "e_login",					"sourceVertexId": "v1",					"targetVertexId": "v2",					"guard": "users_logged_in < users_registered"				},				{					"id": "e5",					"name": "e_login",					"sourceVertexId": "v2",					"targetVertexId": "v2",					"guard": "users_logged_in < users_registered"				},				{					"id": "e7",					"name": "e_register",					"sourceVertexId": "v2",					"targetVertexId": "v1"				},				{					"id": "e8",					"name": "e_create_room",					"sourceVertexId": "v2",					"targetVertexId": "v3"				},				{					"id": "e9",					"name": "e_create_room",					"sourceVertexId": "v3",					"targetVertexId": "v3"				},				{					"id": "e10",					"name": "e_register",					"sourceVertexId": "v3",					"targetVertexId": "v1"				},				{					"id": "e11",					"name": "e_login",					"sourceVertexId": "v3",					"targetVertexId": "v2",					"guard": "users_logged_in < users_registered"				},				{					"id": "e12",					"name": "e_join_room",					"sourceVertexId": "v3",					"targetVertexId": "v4",					"guard": "possible_joins > 0"				},				{					"id": "e14",					"name": "e_join_room",					"sourceVertexId": "v4",					"targetVertexId": "v4",					"guard": "possible_joins > 0"				},				{					"id": "e16",					"name": "e_create_room",					"sourceVertexId": "v4",					"targetVertexId": "v3"				},				{					"id": "e17",					"name": "e_register",					"sourceVertexId": "v4",					"targetVertexId": "v1"				},				{					"id": "e18",					"name": "e_login",					"sourceVertexId": "v4",					"targetVertexId": "v2",					"guard": "users_logged_in < users_registered"				}			]		},		{			"name": "Messaging",			"generator":"random(edge_coverage(100) && vertex_coverage(100))",			"startElementId": "m_v0",			"vertices": [				{					"id": "m_v0",					"name": "v_in_room",					"sharedState": "messaging"				}			],			"edges": [				{					"id": "m_e0",					"name": "e_send_message",					"sourceVertexId": "m_v0",					"targetVertexId": "m_v0"				},				{					"id": "m_e1",					"name": "e_redact_message",					"sourceVertexId": "m_v0",					"targetVertexId": "m_v0",					"guard": "room_has_messages"				}			]		}	]}
+Dec 14, 2021 11:17:47 PM com.sun.jersey.server.impl.application.WebApplicationImpl _initiate
+INFO: Initiating Jersey application, version 'Jersey: 1.19.4 05/24/2017 03:20 PM'
+Dec 14, 2021 11:17:47 PM org.glassfish.grizzly.http.server.NetworkListener start
+INFO: Started listener bound to [0.0.0.0:8887]
+Dec 14, 2021 11:17:47 PM org.glassfish.grizzly.http.server.HttpServer start
+INFO: [HttpServer] Started.
+Try http://localhost:8887/graphwalker/hasNext or http://localhost:8887/graphwalker/getNext
+Press Control+C to end...
+23:17:47.905 [Grizzly(1)] DEBUG org.graphwalker.restful.Restful - Received restart
+23:17:47.922 [Grizzly(3)] DEBUG org.graphwalker.restful.Restful - Received hasNext
+23:17:47.930 [Grizzly(5)] DEBUG org.graphwalker.restful.Restful - Received getNext
+23:17:47.930 [Grizzly(5)] DEBUG org.graphwalker.core.machine.SimpleMachine - Context: org.graphwalker.io.factory.json.JsonContext@7048f722
+23:17:47.931 [Grizzly(5)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute method: 'v_start' in model: 'UserAndRoomManagement'
+23:17:47.963 [Grizzly(7)] DEBUG org.graphwalker.restful.Restful - Received getData
+23:17:47.971 [Grizzly(9)] DEBUG org.graphwalker.restful.Restful - Received setData with script: users_registered=0
+23:17:47.972 [Grizzly(9)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute action: 'users_registered=0' in model: 'UserAndRoomManagement'
+23:17:48.035 [Grizzly(9)] DEBUG org.graphwalker.core.machine.ExecutionContext - Data: 'JsonContext: org.graphwalker.io.factory.json.JsonContext@7048f722, users_registered: 0, '
+23:17:48.041 [Grizzly(11)] DEBUG org.graphwalker.restful.Restful - Received setData with script: users_logged_in=0
+23:17:48.041 [Grizzly(11)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute action: 'users_logged_in=0' in model: 'UserAndRoomManagement'
+23:17:48.045 [Grizzly(11)] DEBUG org.graphwalker.core.machine.ExecutionContext - Data: 'JsonContext: org.graphwalker.io.factory.json.JsonContext@7048f722, users_registered: 0, users_logged_in: 0, '
+23:17:48.051 [Grizzly(13)] DEBUG org.graphwalker.restful.Restful - Received setData with script: rooms=0
+23:17:48.051 [Grizzly(13)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute action: 'rooms=0' in model: 'UserAndRoomManagement'
+23:17:48.053 [Grizzly(13)] DEBUG org.graphwalker.core.machine.ExecutionContext - Data: 'JsonContext: org.graphwalker.io.factory.json.JsonContext@7048f722, users_registered: 0, rooms: 0, users_logged_in: 0, '
+23:17:48.058 [Grizzly(15)] DEBUG org.graphwalker.restful.Restful - Received setData with script: max_room_members=0
+23:17:48.059 [Grizzly(15)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute action: 'max_room_members=0' in model: 'UserAndRoomManagement'
+23:17:48.061 [Grizzly(15)] DEBUG org.graphwalker.core.machine.ExecutionContext - Data: 'JsonContext: org.graphwalker.io.factory.json.JsonContext@7048f722, users_registered: 0, rooms: 0, users_logged_in: 0, max_room_members: 0, '
+23:17:48.067 [Grizzly(1)] DEBUG org.graphwalker.restful.Restful - Received setData with script: possible_joins=0
+23:17:48.067 [Grizzly(1)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute action: 'possible_joins=0' in model: 'UserAndRoomManagement'
+23:17:48.070 [Grizzly(1)] DEBUG org.graphwalker.core.machine.ExecutionContext - Data: 'JsonContext: org.graphwalker.io.factory.json.JsonContext@7048f722, users_registered: 0, rooms: 0, users_logged_in: 0, max_room_members: 0, possible_joins: 0, '
+23:17:48.075 [Grizzly(3)] DEBUG org.graphwalker.restful.Restful - Received getData
+23:17:48.081 [Grizzly(5)] DEBUG org.graphwalker.restful.Restful - Received hasNext
+23:17:48.088 [Grizzly(7)] DEBUG org.graphwalker.restful.Restful - Received getNext
+23:17:48.089 [Grizzly(7)] DEBUG org.graphwalker.core.machine.SimpleMachine - Context: org.graphwalker.io.factory.json.JsonContext@7048f722
+23:17:48.091 [Grizzly(7)] INFO org.graphwalker.core.generator.SingletonRandomGenerator - Seed: 1266915989800
+23:17:48.092 [Grizzly(7)] DEBUG org.graphwalker.core.generator.QuickRandomPath - New selected target is: v2 - v_logged_in
+23:17:48.097 [Grizzly(7)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute method: 'e_register' in model: 'UserAndRoomManagement'
+23:17:48.103 [Grizzly(9)] DEBUG org.graphwalker.restful.Restful - Received getData
+23:17:48.447 [Grizzly(11)] DEBUG org.graphwalker.restful.Restful - Received setData with script: users_registered=1
+23:17:48.448 [Grizzly(11)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute action: 'users_registered=1' in model: 'UserAndRoomManagement'
+23:17:48.449 [Grizzly(11)] DEBUG org.graphwalker.core.machine.ExecutionContext - Data: 'JsonContext: org.graphwalker.io.factory.json.JsonContext@7048f722, users_registered: 1, rooms: 0, users_logged_in: 0, max_room_members: 0, possible_joins: 0, '
+23:17:48.453 [Grizzly(13)] DEBUG org.graphwalker.restful.Restful - Received hasNext
+23:17:48.456 [Grizzly(15)] DEBUG org.graphwalker.restful.Restful - Received getNext
+23:17:48.456 [Grizzly(15)] DEBUG org.graphwalker.core.machine.SimpleMachine - Context: org.graphwalker.io.factory.json.JsonContext@7048f722
+23:17:48.457 [Grizzly(15)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute method: 'v_registered' in model: 'UserAndRoomManagement'
+23:17:48.460 [Grizzly(1)] DEBUG org.graphwalker.restful.Restful - Received getData
+23:17:48.471 [Grizzly(3)] DEBUG org.graphwalker.restful.Restful - Received hasNext
+23:17:48.475 [Grizzly(5)] DEBUG org.graphwalker.restful.Restful - Received getNext
+23:17:48.475 [Grizzly(5)] DEBUG org.graphwalker.core.machine.SimpleMachine - Context: org.graphwalker.io.factory.json.JsonContext@7048f722
+23:17:48.475 [Grizzly(5)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute guard: 'users_logged_in < users_registered' in edge e_login, in model: 'UserAndRoomManagement'
+23:17:48.480 [Grizzly(5)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute method: 'e_login' in model: 'UserAndRoomManagement'
+23:17:48.485 [Grizzly(7)] DEBUG org.graphwalker.restful.Restful - Received getData
+23:17:48.711 [Grizzly(9)] DEBUG org.graphwalker.restful.Restful - Received setData with script: users_logged_in=1
+23:17:48.711 [Grizzly(9)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute action: 'users_logged_in=1' in model: 'UserAndRoomManagement'
+23:17:48.712 [Grizzly(9)] DEBUG org.graphwalker.core.machine.ExecutionContext - Data: 'JsonContext: org.graphwalker.io.factory.json.JsonContext@7048f722, users_registered: 1, rooms: 0, users_logged_in: 1, max_room_members: 0, possible_joins: 0, '
+23:17:48.716 [Grizzly(11)] DEBUG org.graphwalker.restful.Restful - Received hasNext
+23:17:48.720 [Grizzly(13)] DEBUG org.graphwalker.restful.Restful - Received getNext
+23:17:48.720 [Grizzly(13)] DEBUG org.graphwalker.core.machine.SimpleMachine - Context: org.graphwalker.io.factory.json.JsonContext@7048f722
+23:17:48.720 [Grizzly(13)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute method: 'v_logged_in' in model: 'UserAndRoomManagement'
+23:17:48.724 [Grizzly(15)] DEBUG org.graphwalker.restful.Restful - Received getData
+23:17:48.745 [Grizzly(1)] DEBUG org.graphwalker.restful.Restful - Received hasNext
+23:17:48.748 [Grizzly(3)] DEBUG org.graphwalker.restful.Restful - Received getNext
+23:17:48.749 [Grizzly(3)] DEBUG org.graphwalker.core.machine.SimpleMachine - Context: org.graphwalker.io.factory.json.JsonContext@7048f722
+23:17:48.749 [Grizzly(3)] DEBUG org.graphwalker.core.generator.QuickRandomPath - New selected target is: e10 - e_register
+23:17:48.749 [Grizzly(3)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute guard: 'users_logged_in < users_registered' in edge e_login, in model: 'UserAndRoomManagement'
+23:17:48.750 [Grizzly(3)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute method: 'e_create_room' in model: 'UserAndRoomManagement'
+23:17:48.753 [Grizzly(5)] DEBUG org.graphwalker.restful.Restful - Received getData
+23:17:49.496 [Grizzly(7)] DEBUG org.graphwalker.restful.Restful - Received setData with script: rooms=1
+23:17:49.496 [Grizzly(7)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute action: 'rooms=1' in model: 'UserAndRoomManagement'
+23:17:49.497 [Grizzly(7)] DEBUG org.graphwalker.core.machine.ExecutionContext - Data: 'JsonContext: org.graphwalker.io.factory.json.JsonContext@7048f722, users_registered: 1, rooms: 1, users_logged_in: 1, max_room_members: 0, possible_joins: 0, '
+23:17:49.502 [Grizzly(9)] DEBUG org.graphwalker.restful.Restful - Received hasNext
+23:17:49.507 [Grizzly(11)] DEBUG org.graphwalker.restful.Restful - Received getNext
+23:17:49.507 [Grizzly(11)] DEBUG org.graphwalker.core.machine.SimpleMachine - Context: org.graphwalker.io.factory.json.JsonContext@7048f722
+23:17:49.507 [Grizzly(11)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute method: 'v_room_created' in model: 'UserAndRoomManagement'
+23:17:49.512 [Grizzly(13)] DEBUG org.graphwalker.restful.Restful - Received getData
+23:17:49.542 [Grizzly(15)] DEBUG org.graphwalker.restful.Restful - Received setData with script: possible_joins=1
+23:17:49.543 [Grizzly(15)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute action: 'possible_joins=1' in model: 'UserAndRoomManagement'
+23:17:49.544 [Grizzly(15)] DEBUG org.graphwalker.core.machine.ExecutionContext - Data: 'JsonContext: org.graphwalker.io.factory.json.JsonContext@7048f722, users_registered: 1, rooms: 1, users_logged_in: 1, max_room_members: 0, possible_joins: 1, '
+23:17:49.549 [Grizzly(1)] DEBUG org.graphwalker.restful.Restful - Received hasNext
+23:17:49.554 [Grizzly(3)] DEBUG org.graphwalker.restful.Restful - Received getNext
+23:17:49.554 [Grizzly(3)] DEBUG org.graphwalker.core.machine.SimpleMachine - Context: org.graphwalker.io.factory.json.JsonContext@7048f722
+23:17:49.555 [Grizzly(3)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute guard: 'users_logged_in < users_registered' in edge e_login, in model: 'UserAndRoomManagement'
+23:17:49.555 [Grizzly(3)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute guard: 'possible_joins > 0' in edge e_join_room, in model: 'UserAndRoomManagement'
+23:17:49.558 [Grizzly(3)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute method: 'e_register' in model: 'UserAndRoomManagement'
+23:17:49.563 [Grizzly(5)] DEBUG org.graphwalker.restful.Restful - Received getData
+23:17:49.895 [Grizzly(7)] DEBUG org.graphwalker.restful.Restful - Received setData with script: users_registered=2
+23:17:49.895 [Grizzly(7)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute action: 'users_registered=2' in model: 'UserAndRoomManagement'
+23:17:49.896 [Grizzly(7)] DEBUG org.graphwalker.core.machine.ExecutionContext - Data: 'JsonContext: org.graphwalker.io.factory.json.JsonContext@7048f722, users_registered: 2, rooms: 1, users_logged_in: 1, max_room_members: 0, possible_joins: 1, '
+23:17:49.900 [Grizzly(9)] DEBUG org.graphwalker.restful.Restful - Received hasNext
+23:17:49.903 [Grizzly(11)] DEBUG org.graphwalker.restful.Restful - Received getNext
+23:17:49.903 [Grizzly(11)] DEBUG org.graphwalker.core.machine.SimpleMachine - Context: org.graphwalker.io.factory.json.JsonContext@7048f722
+23:17:49.903 [Grizzly(11)] DEBUG org.graphwalker.core.generator.QuickRandomPath - New selected target is: v4 - v_room_joined
+23:17:49.904 [Grizzly(11)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute method: 'v_registered' in model: 'UserAndRoomManagement'
+23:17:49.907 [Grizzly(13)] DEBUG org.graphwalker.restful.Restful - Received getData
+23:17:51.927 [Grizzly(15)] DEBUG org.graphwalker.restful.Restful - Received hasNext
+23:17:51.931 [Grizzly(1)] DEBUG org.graphwalker.restful.Restful - Received getNext
+23:17:51.931 [Grizzly(1)] DEBUG org.graphwalker.core.machine.SimpleMachine - Context: org.graphwalker.io.factory.json.JsonContext@7048f722
+23:17:51.931 [Grizzly(1)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute guard: 'users_logged_in < users_registered' in edge e_login, in model: 'UserAndRoomManagement'
+23:17:51.932 [Grizzly(1)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute method: 'e_login' in model: 'UserAndRoomManagement'
+23:17:51.935 [Grizzly(3)] DEBUG org.graphwalker.restful.Restful - Received getData
+23:17:52.160 [Grizzly(5)] DEBUG org.graphwalker.restful.Restful - Received setData with script: users_logged_in=2
+23:17:52.160 [Grizzly(5)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute action: 'users_logged_in=2' in model: 'UserAndRoomManagement'
+23:17:52.162 [Grizzly(5)] DEBUG org.graphwalker.core.machine.ExecutionContext - Data: 'JsonContext: org.graphwalker.io.factory.json.JsonContext@7048f722, users_registered: 2, rooms: 1, users_logged_in: 2, max_room_members: 0, possible_joins: 1, '
+23:17:52.165 [Grizzly(7)] DEBUG org.graphwalker.restful.Restful - Received hasNext
+23:17:52.168 [Grizzly(9)] DEBUG org.graphwalker.restful.Restful - Received getNext
+23:17:52.168 [Grizzly(9)] DEBUG org.graphwalker.core.machine.SimpleMachine - Context: org.graphwalker.io.factory.json.JsonContext@7048f722
+23:17:52.169 [Grizzly(9)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute method: 'v_logged_in' in model: 'UserAndRoomManagement'
+23:17:52.172 [Grizzly(11)] DEBUG org.graphwalker.restful.Restful - Received getData
+23:17:52.195 [Grizzly(13)] DEBUG org.graphwalker.restful.Restful - Received hasNext
+23:17:52.198 [Grizzly(15)] DEBUG org.graphwalker.restful.Restful - Received getNext
+23:17:52.198 [Grizzly(15)] DEBUG org.graphwalker.core.machine.SimpleMachine - Context: org.graphwalker.io.factory.json.JsonContext@7048f722
+23:17:52.199 [Grizzly(15)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute guard: 'users_logged_in < users_registered' in edge e_login, in model: 'UserAndRoomManagement'
+23:17:52.199 [Grizzly(15)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute method: 'e_create_room' in model: 'UserAndRoomManagement'
+23:17:52.202 [Grizzly(1)] DEBUG org.graphwalker.restful.Restful - Received getData
+23:17:52.799 [Grizzly(3)] DEBUG org.graphwalker.restful.Restful - Received setData with script: rooms=2
+23:17:52.799 [Grizzly(3)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute action: 'rooms=2' in model: 'UserAndRoomManagement'
+23:17:52.800 [Grizzly(3)] DEBUG org.graphwalker.core.machine.ExecutionContext - Data: 'JsonContext: org.graphwalker.io.factory.json.JsonContext@7048f722, users_registered: 2, rooms: 2, users_logged_in: 2, max_room_members: 0, possible_joins: 1, '
+23:17:52.803 [Grizzly(5)] DEBUG org.graphwalker.restful.Restful - Received hasNext
+23:17:52.806 [Grizzly(7)] DEBUG org.graphwalker.restful.Restful - Received getNext
+23:17:52.806 [Grizzly(7)] DEBUG org.graphwalker.core.machine.SimpleMachine - Context: org.graphwalker.io.factory.json.JsonContext@7048f722
+23:17:52.806 [Grizzly(7)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute method: 'v_room_created' in model: 'UserAndRoomManagement'
+23:17:52.810 [Grizzly(9)] DEBUG org.graphwalker.restful.Restful - Received getData
+23:17:52.844 [Grizzly(11)] DEBUG org.graphwalker.restful.Restful - Received setData with script: possible_joins=3
+23:17:52.844 [Grizzly(11)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute action: 'possible_joins=3' in model: 'UserAndRoomManagement'
+23:17:52.845 [Grizzly(11)] DEBUG org.graphwalker.core.machine.ExecutionContext - Data: 'JsonContext: org.graphwalker.io.factory.json.JsonContext@7048f722, users_registered: 2, rooms: 2, users_logged_in: 2, max_room_members: 0, possible_joins: 3, '
+23:17:52.848 [Grizzly(13)] DEBUG org.graphwalker.restful.Restful - Received hasNext
+23:17:52.851 [Grizzly(15)] DEBUG org.graphwalker.restful.Restful - Received getNext
+23:17:52.851 [Grizzly(15)] DEBUG org.graphwalker.core.machine.SimpleMachine - Context: org.graphwalker.io.factory.json.JsonContext@7048f722
+23:17:52.852 [Grizzly(15)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute guard: 'users_logged_in < users_registered' in edge e_login, in model: 'UserAndRoomManagement'
+23:17:52.852 [Grizzly(15)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute guard: 'possible_joins > 0' in edge e_join_room, in model: 'UserAndRoomManagement'
+23:17:52.852 [Grizzly(15)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute method: 'e_join_room' in model: 'UserAndRoomManagement'
+23:17:52.855 [Grizzly(1)] DEBUG org.graphwalker.restful.Restful - Received getData
+23:17:52.890 [Grizzly(3)] DEBUG org.graphwalker.restful.Restful - Received hasNext
+23:17:52.893 [Grizzly(5)] DEBUG org.graphwalker.restful.Restful - Received getNext
+23:17:52.893 [Grizzly(5)] DEBUG org.graphwalker.core.machine.SimpleMachine - Context: org.graphwalker.io.factory.json.JsonContext@7048f722
+23:17:52.894 [Grizzly(5)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute method: 'v_room_joined' in model: 'UserAndRoomManagement'
+23:17:52.897 [Grizzly(7)] DEBUG org.graphwalker.restful.Restful - Received getData
+23:17:52.911 [Grizzly(9)] DEBUG org.graphwalker.restful.Restful - Received setData with script: max_room_members=1
+23:17:52.911 [Grizzly(9)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute action: 'max_room_members=1' in model: 'UserAndRoomManagement'
+23:17:52.912 [Grizzly(9)] DEBUG org.graphwalker.core.machine.ExecutionContext - Data: 'JsonContext: org.graphwalker.io.factory.json.JsonContext@7048f722, users_registered: 2, rooms: 2, users_logged_in: 2, max_room_members: 1, possible_joins: 3, '
+23:17:52.915 [Grizzly(11)] DEBUG org.graphwalker.restful.Restful - Received hasNext
+23:17:52.920 [Grizzly(13)] DEBUG org.graphwalker.restful.Restful - Received getNext
+23:17:52.920 [Grizzly(13)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute guard: 'possible_joins > 0' in edge e_join_room, in model: 'UserAndRoomManagement'
+23:17:52.921 [Grizzly(13)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute guard: 'possible_joins > 0' in edge e_join_room, in model: 'UserAndRoomManagement'
+23:17:52.921 [Grizzly(13)] DEBUG org.graphwalker.core.machine.SimpleMachine - Context: org.graphwalker.io.factory.json.JsonContext@7048f722
+23:17:52.921 [Grizzly(13)] DEBUG org.graphwalker.core.generator.QuickRandomPath - New selected target is: e18 - e_login
+23:17:52.922 [Grizzly(13)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute guard: 'possible_joins > 0' in edge e_join_room, in model: 'UserAndRoomManagement'
+23:17:52.922 [Grizzly(13)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute guard: 'users_logged_in < users_registered' in edge e_login, in model: 'UserAndRoomManagement'
+23:17:52.922 [Grizzly(13)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute method: 'e_join_room' in model: 'UserAndRoomManagement'
+23:17:52.926 [Grizzly(15)] DEBUG org.graphwalker.restful.Restful - Received getData
+23:17:52.974 [Grizzly(1)] DEBUG org.graphwalker.restful.Restful - Received hasNext
+23:17:52.977 [Grizzly(3)] DEBUG org.graphwalker.restful.Restful - Received getNext
+23:17:52.977 [Grizzly(3)] DEBUG org.graphwalker.core.machine.SimpleMachine - Context: org.graphwalker.io.factory.json.JsonContext@7048f722
+23:17:52.978 [Grizzly(3)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute method: 'v_room_joined' in model: 'UserAndRoomManagement'
+23:17:52.981 [Grizzly(5)] DEBUG org.graphwalker.restful.Restful - Received getData
+23:17:52.991 [Grizzly(7)] DEBUG org.graphwalker.restful.Restful - Received setData with script: max_room_members=1
+23:17:52.991 [Grizzly(7)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute action: 'max_room_members=1' in model: 'UserAndRoomManagement'
+23:17:52.992 [Grizzly(7)] DEBUG org.graphwalker.core.machine.ExecutionContext - Data: 'JsonContext: org.graphwalker.io.factory.json.JsonContext@7048f722, users_registered: 2, rooms: 2, users_logged_in: 2, max_room_members: 1, possible_joins: 3, '
+23:17:52.994 [Grizzly(9)] DEBUG org.graphwalker.restful.Restful - Received hasNext
+23:17:52.997 [Grizzly(11)] DEBUG org.graphwalker.restful.Restful - Received getNext
+23:17:52.998 [Grizzly(11)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute guard: 'possible_joins > 0' in edge e_join_room, in model: 'UserAndRoomManagement'
+23:17:52.998 [Grizzly(11)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute guard: 'possible_joins > 0' in edge e_join_room, in model: 'UserAndRoomManagement'
+23:17:52.998 [Grizzly(11)] DEBUG org.graphwalker.core.machine.SimpleMachine - Context: org.graphwalker.io.factory.json.JsonContext@c074c0c
+23:17:52.999 [Grizzly(11)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute method: 'v_in_room' in model: 'Messaging'
+23:17:53.003 [Grizzly(13)] DEBUG org.graphwalker.restful.Restful - Received getData
+23:17:53.006 [Grizzly(15)] DEBUG org.graphwalker.restful.Restful - Received setData with script: room_has_messages=false
+23:17:53.006 [Grizzly(15)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute action: 'room_has_messages=false' in model: 'Messaging'
+23:17:53.009 [Grizzly(15)] DEBUG org.graphwalker.core.machine.ExecutionContext - Data: 'JsonContext: org.graphwalker.io.factory.json.JsonContext@c074c0c, room_has_messages: false, '
+23:17:53.012 [Grizzly(1)] DEBUG org.graphwalker.restful.Restful - Received getData
+23:17:53.101 [Grizzly(3)] DEBUG org.graphwalker.restful.Restful - Received setData with script: room_has_messages=false
+23:17:53.101 [Grizzly(3)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute action: 'room_has_messages=false' in model: 'Messaging'
+23:17:53.102 [Grizzly(3)] DEBUG org.graphwalker.core.machine.ExecutionContext - Data: 'JsonContext: org.graphwalker.io.factory.json.JsonContext@c074c0c, room_has_messages: false, '
+23:17:53.105 [Grizzly(5)] DEBUG org.graphwalker.restful.Restful - Received hasNext
+23:17:53.107 [Grizzly(7)] DEBUG org.graphwalker.restful.Restful - Received getNext
+23:17:53.108 [Grizzly(7)] DEBUG org.graphwalker.core.machine.SimpleMachine - Context: org.graphwalker.io.factory.json.JsonContext@c074c0c
+23:17:53.108 [Grizzly(7)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute guard: 'room_has_messages' in edge e_redact_message, in model: 'Messaging'
+23:17:53.109 [Grizzly(7)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute method: 'e_send_message' in model: 'Messaging'
+23:17:53.112 [Grizzly(9)] DEBUG org.graphwalker.restful.Restful - Received getData
+23:17:53.168 [Grizzly(11)] DEBUG org.graphwalker.restful.Restful - Received hasNext
+23:17:53.171 [Grizzly(13)] DEBUG org.graphwalker.restful.Restful - Received getNext
+23:17:53.171 [Grizzly(13)] DEBUG org.graphwalker.core.machine.SimpleMachine - Context: org.graphwalker.io.factory.json.JsonContext@c074c0c
+23:17:53.171 [Grizzly(13)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute method: 'v_in_room' in model: 'Messaging'
+23:17:53.174 [Grizzly(15)] DEBUG org.graphwalker.restful.Restful - Received getData
+23:17:53.249 [Grizzly(1)] DEBUG org.graphwalker.restful.Restful - Received setData with script: room_has_messages=true
+23:17:53.250 [Grizzly(1)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute action: 'room_has_messages=true' in model: 'Messaging'
+23:17:53.251 [Grizzly(1)] DEBUG org.graphwalker.core.machine.ExecutionContext - Data: 'JsonContext: org.graphwalker.io.factory.json.JsonContext@c074c0c, room_has_messages: true, '
+23:17:53.253 [Grizzly(3)] DEBUG org.graphwalker.restful.Restful - Received hasNext
+23:17:53.256 [Grizzly(5)] DEBUG org.graphwalker.restful.Restful - Received getNext
+23:17:53.256 [Grizzly(5)] DEBUG org.graphwalker.core.machine.SimpleMachine - Context: org.graphwalker.io.factory.json.JsonContext@7048f722
+23:17:53.257 [Grizzly(5)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute method: 'v_room_joined' in model: 'UserAndRoomManagement'
+23:17:53.260 [Grizzly(7)] DEBUG org.graphwalker.restful.Restful - Received getData
+23:17:53.271 [Grizzly(9)] DEBUG org.graphwalker.restful.Restful - Received setData with script: max_room_members=1
+23:17:53.271 [Grizzly(9)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute action: 'max_room_members=1' in model: 'UserAndRoomManagement'
+23:17:53.272 [Grizzly(9)] DEBUG org.graphwalker.core.machine.ExecutionContext - Data: 'JsonContext: org.graphwalker.io.factory.json.JsonContext@7048f722, users_registered: 2, rooms: 2, users_logged_in: 2, max_room_members: 1, possible_joins: 3, '
+23:17:53.274 [Grizzly(11)] DEBUG org.graphwalker.restful.Restful - Received hasNext
+23:17:53.277 [Grizzly(13)] DEBUG org.graphwalker.restful.Restful - Received getNext
+23:17:53.278 [Grizzly(13)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute guard: 'possible_joins > 0' in edge e_join_room, in model: 'UserAndRoomManagement'
+23:17:53.278 [Grizzly(13)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute guard: 'possible_joins > 0' in edge e_join_room, in model: 'UserAndRoomManagement'
+23:17:53.279 [Grizzly(13)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute guard: 'possible_joins > 0' in edge e_join_room, in model: 'UserAndRoomManagement'
+23:17:53.279 [Grizzly(13)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute guard: 'possible_joins > 0' in edge e_join_room, in model: 'UserAndRoomManagement'
+23:17:53.279 [Grizzly(13)] DEBUG org.graphwalker.core.machine.SimpleMachine - Context: org.graphwalker.io.factory.json.JsonContext@7048f722
+23:17:53.280 [Grizzly(13)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute guard: 'possible_joins > 0' in edge e_join_room, in model: 'UserAndRoomManagement'
+23:17:53.280 [Grizzly(13)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute guard: 'users_logged_in < users_registered' in edge e_login, in model: 'UserAndRoomManagement'
+23:17:53.280 [Grizzly(13)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute method: 'e_join_room' in model: 'UserAndRoomManagement'
+23:17:53.283 [Grizzly(15)] DEBUG org.graphwalker.restful.Restful - Received getData
+23:17:53.368 [Grizzly(1)] DEBUG org.graphwalker.restful.Restful - Received hasNext
+23:17:53.371 [Grizzly(3)] DEBUG org.graphwalker.restful.Restful - Received getNext
+23:17:53.371 [Grizzly(3)] DEBUG org.graphwalker.core.machine.SimpleMachine - Context: org.graphwalker.io.factory.json.JsonContext@7048f722
+23:17:53.371 [Grizzly(3)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute method: 'v_room_joined' in model: 'UserAndRoomManagement'
+23:17:53.374 [Grizzly(5)] DEBUG org.graphwalker.restful.Restful - Received getData
+23:17:53.411 [Grizzly(7)] DEBUG org.graphwalker.restful.Restful - Received setData with script: max_room_members=2
+23:17:53.412 [Grizzly(7)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute action: 'max_room_members=2' in model: 'UserAndRoomManagement'
+23:17:53.413 [Grizzly(7)] DEBUG org.graphwalker.core.machine.ExecutionContext - Data: 'JsonContext: org.graphwalker.io.factory.json.JsonContext@7048f722, users_registered: 2, rooms: 2, users_logged_in: 2, max_room_members: 2, possible_joins: 3, '
+23:17:53.416 [Grizzly(9)] DEBUG org.graphwalker.restful.Restful - Received hasNext
+23:17:53.418 [Grizzly(11)] DEBUG org.graphwalker.restful.Restful - Received getNext
+23:17:53.419 [Grizzly(11)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute guard: 'possible_joins > 0' in edge e_join_room, in model: 'UserAndRoomManagement'
+23:17:53.419 [Grizzly(11)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute guard: 'possible_joins > 0' in edge e_join_room, in model: 'UserAndRoomManagement'
+23:17:53.419 [Grizzly(11)] DEBUG org.graphwalker.core.machine.SimpleMachine - Context: org.graphwalker.io.factory.json.JsonContext@7048f722
+23:17:53.419 [Grizzly(11)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute guard: 'possible_joins > 0' in edge e_join_room, in model: 'UserAndRoomManagement'
+23:17:53.420 [Grizzly(11)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute guard: 'users_logged_in < users_registered' in edge e_login, in model: 'UserAndRoomManagement'
+23:17:53.420 [Grizzly(11)] DEBUG org.graphwalker.core.machine.ExecutionContext - Execute method: 'e_join_room' in model: 'UserAndRoomManagement'
+23:17:53.423 [Grizzly(13)] DEBUG org.graphwalker.restful.Restful - Received getData
+23:17:53.432 [Grizzly(15)] DEBUG org.graphwalker.restful.Restful - Received fail with reason: unexpected: e_join_room did not join a room
+23:17:53.436 [Grizzly(1)] DEBUG org.graphwalker.restful.Restful - Received getData
+23:17:53.440 [Grizzly(3)] DEBUG org.graphwalker.restful.Restful - Received getData
+23:17:53.444 [Grizzly(5)] DEBUG org.graphwalker.restful.Restful - Received getStatistics
