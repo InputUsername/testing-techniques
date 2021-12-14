@@ -92,7 +92,8 @@
 					"id": "e11",
 					"name": "e_join_room",
 					"sourceVertexId": "v3",
-					"targetVertexId": "v4"
+					"targetVertexId": "v4",
+					"guard": "joinable_rooms > 0"
 				},
 				{
 					"id": "e12",
@@ -105,7 +106,7 @@
 					"name": "e_join_room",
 					"sourceVertexId": "v4",
 					"targetVertexId": "v4",
-					"guard": "public_rooms > 0"
+					"guard": "joinable_rooms > 0"
 				},
 				{
 					"id": "e14",

@@ -41,7 +41,7 @@ class UserAndRoomManagement:
         self.rooms = dict()
         data['rooms'] = 0
         data['max_room_members'] = 0
-        data['public_rooms'] = 0
+        data['joinable_rooms'] = 0
 
     def tearDownModel(self, data):
         """
@@ -143,8 +143,6 @@ class UserAndRoomManagement:
 
         self.rooms[room_name] = Room(user.username, room_name, is_private, room_id, set())
         data['rooms'] = int(data['rooms']) + 1
-        if not is_private:
-            data['public_rooms'] = int(data['public_rooms']) + 1
 
     def v_room_created(self, data):
         """
@@ -155,11 +153,20 @@ class UserAndRoomManagement:
 
         assert int(data['rooms']) != 0
 
+        joinable_rooms = 0
+
         for _room_name, room in self.rooms.items():
             response = list_room(room.id)
             assert response.status_code == 200
             is_private = response.json()['visibility'] == 'private'
             assert is_private == room.is_private
+
+            for username, _user in self.users.items():
+                if not room.is_private and username != room.creator and username not in room.members:
+                    joinable_rooms += 1
+
+        data['joinable_rooms'] = joinable_rooms
+
 
     def e_join_room(self, data):
         """
