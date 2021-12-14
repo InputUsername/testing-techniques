@@ -60,68 +60,80 @@
 				},
 				{
 					"id": "e6",
-					"name": "e_register",
+					"name": "e_registered_login",
 					"sourceVertexId": "v2",
-					"targetVertexId": "v1"
+					"targetVertexId": "v2"
 				},
 				{
 					"id": "e7",
-					"name": "e_create_room",
+					"name": "e_register",
 					"sourceVertexId": "v2",
-					"targetVertexId": "v3"
+					"targetVertexId": "v1"
 				},
 				{
 					"id": "e8",
 					"name": "e_create_room",
-					"sourceVertexId": "v3",
+					"sourceVertexId": "v2",
 					"targetVertexId": "v3"
 				},
 				{
 					"id": "e9",
+					"name": "e_create_room",
+					"sourceVertexId": "v3",
+					"targetVertexId": "v3"
+				},
+				{
+					"id": "e10",
 					"name": "e_register",
 					"sourceVertexId": "v3",
 					"targetVertexId": "v1"
 				},
 				{
-					"id": "e10",
+					"id": "e11",
 					"name": "e_login",
 					"sourceVertexId": "v3",
 					"targetVertexId": "v2"
 				},
 				{
-					"id": "e11",
+					"id": "e12",
 					"name": "e_join_room",
 					"sourceVertexId": "v3",
 					"targetVertexId": "v4",
 					"guard": "joinable_rooms > 0"
 				},
 				{
-					"id": "e12",
+					"id": "e13",
 					"name": "e_creator_join",
 					"sourceVertexId": "v3",
 					"targetVertexId": "v4"
 				},
 				{
-					"id": "e13",
+					"id": "e14",
 					"name": "e_join_room",
 					"sourceVertexId": "v4",
 					"targetVertexId": "v4",
 					"guard": "joinable_rooms > 0"
 				},
 				{
-					"id": "e14",
+					"id": "e15",
+					"name": "e_creator_join",
+					"sourceVertexId": "v4",
+					"targetVertexId": "v4"
+				},
+				{
+					"id": "e16",
 					"name": "e_create_room",
 					"sourceVertexId": "v4",
 					"targetVertexId": "v3"
 				},
 				{
-					"id": "e15",
+					"id": "e17",
 					"name": "e_register",
 					"sourceVertexId": "v4",
 					"targetVertexId": "v1"
 				},
 				{
-					"id": "e16",
+					"id": "e18",
 					"name": "e_login",
 					"sourceVertexId": "v4",
 					"targetVertexId": "v2"

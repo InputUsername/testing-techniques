@@ -161,9 +161,14 @@ class UserAndRoomManagement:
             is_private = response.json()['visibility'] == 'private'
             assert is_private == room.is_private
 
-            for username, _user in self.users.items():
+            joinable = False
+
+            for username, _user in self.logged_in.items():
                 if not room.is_private and username != room.creator and username not in room.members:
-                    joinable_rooms += 1
+                    joinable = True
+
+            if joinable:
+                joinable_rooms += 1
 
         data['joinable_rooms'] = joinable_rooms
 
