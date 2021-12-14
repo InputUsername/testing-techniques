@@ -1,4 +1,5 @@
 import random
+import string
 from datetime import datetime
 from dataclasses import dataclass
 
@@ -20,6 +21,24 @@ class Room:
     is_private: bool
     id: str
     members: set
+    messages: list
+
+
+@dataclass
+class Message:
+    msg: str
+    event_id: str
+    sender: str
+
+    def __repr__(self):
+        max_len = min(20, len(self.msg))
+        snippet = self.msg[:max_len]
+        return f'Message(msg=\'{snippet}...\', event_id=\'{self.event_id}\', sender=\'{self.sender}\')'
+
+
+users = dict()
+logged_in = dict()
+rooms = dict()
 
 
 class UserAndRoomManagement:
@@ -33,13 +52,10 @@ class UserAndRoomManagement:
         Called on model creation.
         """
 
-        self.users = dict()
         data['users_registered'] = 0
 
-        self.logged_in = dict()
         data['users_logged_in'] = 0
 
-        self.rooms = dict()
         data['rooms'] = 0
         data['max_room_members'] = 0
         data['joinable_rooms'] = 0
@@ -49,9 +65,9 @@ class UserAndRoomManagement:
         Called on model destruction.
         """
 
-        print(self.users, end='\n\n')
-        print(self.logged_in, end='\n\n')
-        print(self.rooms, end='\n\n')
+        print(users, end='\n\n')
+        print(logged_in, end='\n\n')
+        print(rooms, end='\n\n')
         print(data)
 
     def v_start(self, _data):
@@ -73,7 +89,7 @@ class UserAndRoomManagement:
 
         registration_access_token, user_id = register(username, password)
 
-        self.users[username] = User(username, password, registration_access_token, user_id)
+        users[username] = User(username, password, registration_access_token, user_id)
         data['users_registered'] = int(data['users_registered']) + 1
 
     def v_registered(self, data):
@@ -85,7 +101,7 @@ class UserAndRoomManagement:
 
         assert int(data['users_registered']) != 0
 
-        for username, _user in self.users.items():
+        for username, _user in users.items():
             assert not available(username)
 
     def e_login(self, data):
@@ -94,11 +110,11 @@ class UserAndRoomManagement:
         Logs a user in using the dedicated Matrix API endpoint.
         """
 
-        for username, user in self.users.items():
-            if username not in self.logged_in:
+        for username, user in users.items():
+            if username not in logged_in:
                 access_token = login(username, user.password)
-                self.users[username].access_token = access_token
-                self.logged_in[username] = user
+                users[username].access_token = access_token
+                logged_in[username] = user
                 data['users_logged_in'] = int(data['users_logged_in']) + 1
                 break
 
@@ -110,9 +126,9 @@ class UserAndRoomManagement:
         an edge that does nothing except update the login status in the model.
         """
 
-        for username, user in self.users.items():
-            if username not in self.logged_in:
-                self.logged_in[username] = user
+        for username, user in users.items():
+            if username not in logged_in:
+                logged_in[username] = user
                 data['users_logged_in'] = int(data['users_logged_in']) + 1
                 break
 
@@ -125,7 +141,7 @@ class UserAndRoomManagement:
         assert int(data['users_registered']) != 0
         assert int(data['users_logged_in']) != 0
 
-        for _username, user in self.logged_in.items():
+        for _username, user in logged_in.items():
             response = whoami(user.access_token)
             assert response.status_code == 200
             assert response.json()["user_id"] == user.id
@@ -138,11 +154,11 @@ class UserAndRoomManagement:
 
         room_name = 'altwalker_room_' + str(datetime.now().strftime('%s')) + str(random.randint(0, 999_999_999))
         is_private = bool(random.getrandbits(1))
-        user = random.choice(list(self.logged_in.values()))
+        user = random.choice(list(logged_in.values()))
 
         room_id = create_room(room_name, is_private, user.access_token)
 
-        self.rooms[room_name] = Room(user.username, room_name, is_private, room_id, set())
+        rooms[room_name] = Room(user.username, room_name, is_private, room_id, set(), list())
         data['rooms'] = int(data['rooms']) + 1
 
     def v_room_created(self, data):
@@ -156,7 +172,7 @@ class UserAndRoomManagement:
 
         joinable_rooms = 0
 
-        for _room_name, room in self.rooms.items():
+        for _room_name, room in rooms.items():
             response = list_room(room.id)
             assert response.status_code == 200
             is_private = response.json()['visibility'] == 'private'
@@ -164,9 +180,10 @@ class UserAndRoomManagement:
 
             joinable = False
 
-            for username, _user in self.logged_in.items():
+            for username, _user in logged_in.items():
                 if not room.is_private and username != room.creator and username not in room.members:
                     joinable = True
+                    break
 
             if joinable:
                 joinable_rooms += 1
@@ -178,14 +195,13 @@ class UserAndRoomManagement:
         """
         Called when e_join_room is followed.
         This causes a user that is not yet a member of the room to join it.
-        (Only public rooms can be joined.)
         """
 
-        for _room_name, room in self.rooms.items():
+        for _room_name, room in rooms.items():
             if room.is_private:
                 continue
 
-            for username, user in self.logged_in.items():
+            for username, user in logged_in.items():
                 if username != room.creator and username not in room.members:
                     status_code = join_room(user.access_token, room.id)
                     assert status_code == 200
@@ -200,8 +216,8 @@ class UserAndRoomManagement:
         nothing except update the room creator's member status in the model.
         """
 
-        for _room_name, room in self.rooms.items():
-            for username, user in self.logged_in.items():
+        for _room_name, room in rooms.items():
+            for username, user in logged_in.items():
                 if username == room.creator:
                     room.members.add(username)
                     return
@@ -213,16 +229,105 @@ class UserAndRoomManagement:
         in Matrix itself.
         """
 
-        for _room_name, room in self.rooms.items():
+        for _room_name, room in rooms.items():
             data['max_room_members'] = max(int(data['max_room_members']), len(room.members))
 
         assert(int(data['max_room_members']) != 0)
 
-        for username, user in self.users.items():
+        for username, user in users.items():
             user_rooms = set(joined_rooms(user.access_token)['joined_rooms'])
 
-            for _room_name, room in self.rooms.items():
+            for _room_name, room in rooms.items():
                 # If a user is in a room according to the model,
                 # the room should be in the list of joined rooms for that user.
                 if username in room.members:
                     assert room.id in user_rooms
+
+
+class Messaging:
+    def setUpModel(self, data):
+        self.messaging_rooms = dict()
+
+        self.txn_id = 0
+
+        data['room_has_messages'] = False
+
+    def tearDownModel(self, data):
+        print(self.messaging_rooms, end='\n')
+
+    def retrieve_messages(self, access_token, room_id):
+        response = sync(access_token)
+
+        assert response.status_code == 200
+
+        messages = []
+
+        room_data = response.json()['rooms']['join'][room_id]
+
+        for event in room_data['timeline']['events']:
+            if event['type'] == 'm.room.message' and 'body' in event['content']:
+                username = next(username for username, user in logged_in.items() if user.id == event['sender'])
+                msg = Message(event['content']['body'], event['event_id'], username)
+                messages.append(msg)
+
+        return messages
+
+    def v_in_room(self, data):
+        room_has_messages = False
+
+        for room_name, room in rooms.items():
+            if len(room.members) != 0:
+                self.messaging_rooms[room_name] = room
+
+            if len(room.messages) != 0:
+                room_has_messages = True
+
+        data['room_has_messages'] = room_has_messages
+
+        for _room_name, room in self.messaging_rooms.items():
+            # Pick a member to retrieve room state for
+            user = logged_in[next(iter(room.members))]
+
+            room_messages = self.retrieve_messages(user.access_token, room.id)
+
+            if room_messages != room.messages:
+                print('\n'.join(msg for msg in room_messages), end='\n\n')
+                print('\n'.join(msg for msg in room.messages))
+
+            assert room_messages == room.messages
+
+
+    def e_send_message(self, data):
+        room = random.choice(list(self.messaging_rooms.values()))
+        username = random.choice(list(room.members))
+        user = logged_in[username]
+
+        message_length = random.randint(1, 30)
+        message = ''.join(random.choice(string.ascii_letters + string.digits + string.punctuation) for _ in range(message_length))
+
+        response = send_message(user.access_token, room.id, self.txn_id, message)
+
+        assert response.status_code == 200
+
+        event_id = response.json()['event_id']
+
+        room.messages.append(Message(message, event_id, user.username))
+
+        self.txn_id += 1
+
+    def e_redact_message(self, data):
+        room = random.choice(list(self.messaging_rooms.values()))
+        while len(room.messages) == 0:
+            room = random.choice(list(self.messaging_rooms.values()))
+
+        msg_idx = random.randint(0, len(room.messages) - 1)
+        message = room.messages[msg_idx]
+        user = logged_in[message.sender]
+
+        response = redact(user.access_token, room.id, self.txn_id, message.event_id)
+
+        assert response.status_code == 200
+
+        del room.messages[msg_idx]
+
+        self.txn_id += 1

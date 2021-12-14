@@ -138,6 +138,37 @@ def joined_rooms(access_token):
 
 
 """
+9.4.1   GET /_matrix/client/r0/sync
+"""
+def sync(access_token):
+    return get_request("/_matrix/client/r0/sync", access_token)
+
+
+"""
+13.2.1.1   PUT /matrix/client/r0/rooms/{roomId}/send/m.room.message/{txn}
+Attempts to send a message.
+"""
+def send_message(access_token, room_id, txn, message):
+    body = {
+        "msgtype": "m.text",
+        "body": message
+    }
+
+    response = put_request(f"/_matrix/client/r0/rooms/{room_id}/send/m.room.message/{txn}", body, access_token)
+    return response
+
+
+"""
+9.3.6    PUT /_matrix/client/r0/rooms/{room_id}/redact/{id}/{txn}
+Attempts to redact an event.
+"""
+def redact(access_token, room_id, txn, event_id):
+    response = put_request(f"/_matrix/client/r0/rooms/{room_id}/redact/{event_id}/{txn}", {}, access_token)
+
+    return response
+
+
+"""
 Execute a POST request towards the local matrix server with an optional access token.
 """
 def post_request(endpoint, body, access_token=None):

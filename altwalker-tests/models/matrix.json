@@ -24,7 +24,8 @@
 				},
 				{
 					"id": "v4",
-					"name": "v_room_joined"
+					"name": "v_room_joined",
+					"sharedState": "messaging"
 				}
 			],
 			"edges": [
@@ -137,6 +138,33 @@
 					"name": "e_login",
 					"sourceVertexId": "v4",
 					"targetVertexId": "v2"
+				}
+			]
+		},
+		{
+			"name": "Messaging",
+			"generator":"random(edge_coverage(100) && vertex_coverage(100))",
+			"startElementId": "m_v0",
+			"vertices": [
+				{
+					"id": "m_v0",
+					"name": "v_in_room",
+					"sharedState": "messaging"
+				}
+			],
+			"edges": [
+				{
+					"id": "m_e0",
+					"name": "e_send_message",
+					"sourceVertexId": "m_v0",
+					"targetVertexId": "m_v0"
+				},
+				{
+					"id": "m_e1",
+					"name": "e_redact_message",
+					"sourceVertexId": "m_v0",
+					"targetVertexId": "m_v0",
+					"guard": "room_has_messages"
 				}
 			]
 		}
