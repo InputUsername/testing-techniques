@@ -3,7 +3,9 @@ services:
   tests:
     build: .
     volumes:
-      - ./testing:/app
+      - ./testing:/app/testing/
+      - ./adapter:/app/adapter/
+      - ./model:/app/model/
     depends_on:
       - synapse
   synapse:

@@ -1,5 +1,8 @@
 import requests
 
+# url = "http://localhost:8008"
+url = "http://synapse:8008"
+
 """
 5.5.2   POST /_matrix/client/r0/login
 Attempts to login a user in and returns the response.
@@ -159,7 +162,7 @@ def post_request(endpoint, body, access_token=None):
     if access_token:
         headers_dict["Authorization"] = "Bearer " + access_token
 
-    return requests.post("http://localhost:8008" + endpoint,
+    return requests.post(url + endpoint,
                          headers=headers_dict,
                          json=body
                          )
@@ -173,7 +176,7 @@ def put_request(endpoint, body, access_token=None):
     if access_token:
         headers_dict["Authorization"] = "Bearer " + access_token
 
-    return requests.put("http://localhost:8008" + endpoint,
+    return requests.put(url + endpoint,
                          headers=headers_dict,
                          json=body
                          )
@@ -187,4 +190,4 @@ def get_request(endpoint, access_token=None):
     if access_token:
         headers_dict["Authorization"] = "Bearer " + access_token
 
-    return requests.get("http://localhost:8008" + endpoint, headers=headers_dict)
+    return requests.get(url + endpoint, headers=headers_dict)
