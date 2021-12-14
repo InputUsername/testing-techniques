@@ -53,21 +53,19 @@ class UserAndRoomManagement:
         """
 
         data['users_registered'] = 0
-
         data['users_logged_in'] = 0
-
         data['rooms'] = 0
         data['max_room_members'] = 0
-        data['joinable_rooms'] = 0
+        data['possible_joins'] = 0
 
     def tearDownModel(self, data):
         """
         Called on model destruction.
         """
 
-        print(users, end='\n\n')
-        print(logged_in, end='\n\n')
-        print(rooms, end='\n\n')
+        print('\n'.join(str(user) for user in users.values()), end='\n\n')
+        print(','.join(str(user.username) for user in logged_in.values()), end='\n\n')
+        print('\n'.join(str(room) for room in rooms.values()), end='\n\n')
         print(data)
 
     def v_start(self, _data):
@@ -90,7 +88,7 @@ class UserAndRoomManagement:
         registration_access_token, user_id = register(username, password)
 
         users[username] = User(username, password, registration_access_token, user_id)
-        data['users_registered'] = int(data['users_registered']) + 1
+        data['users_registered'] = len(users)
 
     def v_registered(self, data):
         """
@@ -104,6 +102,8 @@ class UserAndRoomManagement:
         for username, _user in users.items():
             assert not available(username)
 
+        # print(data)
+
     def e_login(self, data):
         """
         Called when e_login is followed.
@@ -115,21 +115,7 @@ class UserAndRoomManagement:
                 access_token = login(username, user.password)
                 users[username].access_token = access_token
                 logged_in[username] = user
-                data['users_logged_in'] = int(data['users_logged_in']) + 1
-                break
-
-    def e_registered_login(self, data):
-        """
-        Called when e_registered_login is followed.
-        On registration, Matrix already returns an access token,
-        so effectively the user is logged in. We model this by
-        an edge that does nothing except update the login status in the model.
-        """
-
-        for username, user in users.items():
-            if username not in logged_in:
-                logged_in[username] = user
-                data['users_logged_in'] = int(data['users_logged_in']) + 1
+                data['users_logged_in'] = len(logged_in)
                 break
 
     def v_logged_in(self, data):
@@ -138,7 +124,6 @@ class UserAndRoomManagement:
         This asserts that every user in the model actually exists.
         """
 
-        assert int(data['users_registered']) != 0
         assert int(data['users_logged_in']) != 0
 
         for _username, user in logged_in.items():
@@ -159,7 +144,7 @@ class UserAndRoomManagement:
         room_id = create_room(room_name, is_private, user.access_token)
 
         rooms[room_name] = Room(user.username, room_name, is_private, room_id, set(), list())
-        data['rooms'] = int(data['rooms']) + 1
+        data['rooms'] = len(rooms)
 
     def v_room_created(self, data):
         """
@@ -170,7 +155,7 @@ class UserAndRoomManagement:
 
         assert int(data['rooms']) != 0
 
-        joinable_rooms = 0
+        possible_joins = 0
 
         for _room_name, room in rooms.items():
             response = list_room(room.id)
@@ -178,17 +163,21 @@ class UserAndRoomManagement:
             is_private = response.json()['visibility'] == 'private'
             assert is_private == room.is_private
 
-            joinable = False
-
             for username, _user in logged_in.items():
-                if not room.is_private and username != room.creator and username not in room.members:
-                    joinable = True
-                    break
+                # print('=======================')
+                # print(username, 'CHECKING JOINABILITY OF', _room_name)
+                # print(room.creator, room.members, room.is_private)
 
-            if joinable:
-                joinable_rooms += 1
+                if username not in room.members:
+                    if (not room.is_private) or username == room.creator:
+                        # print('COULD JOIN!!')
 
-        data['joinable_rooms'] = joinable_rooms
+                        possible_joins += 1
+
+        data['possible_joins'] = possible_joins
+
+        # print('\n'.join(str(room) for room in rooms.values()))
+        # print(data)
 
 
     def e_join_room(self, data):
@@ -198,29 +187,15 @@ class UserAndRoomManagement:
         """
 
         for _room_name, room in rooms.items():
-            if room.is_private:
-                continue
-
             for username, user in logged_in.items():
-                if username != room.creator and username not in room.members:
-                    status_code = join_room(user.access_token, room.id)
-                    assert status_code == 200
-                    room.members.add(username)
-                    return
+                if username not in room.members:
+                    if (not room.is_private) or username == room.creator:
+                        status_code = join_room(user.access_token, room.id)
+                        assert status_code == 200
+                        room.members.add(username)
+                        return
 
-    def e_creator_join(self, data):
-        """
-        Called when e_creator_join is followed.
-        Similar to user creation returning a login token, when a user creates
-        a room they also join that room. We model this by an edge that does
-        nothing except update the room creator's member status in the model.
-        """
-
-        for _room_name, room in rooms.items():
-            for username, user in logged_in.items():
-                if username == room.creator:
-                    room.members.add(username)
-                    return
+        raise Exception('unexpected: e_join_room did not join a room')
 
     def v_room_joined(self, data):
         """
@@ -253,7 +228,7 @@ class Messaging:
         data['room_has_messages'] = False
 
     def tearDownModel(self, data):
-        print(self.messaging_rooms, end='\n')
+        print('\n'.join(str(room) for room in self.messaging_rooms.values()))
 
     def retrieve_messages(self, access_token, room_id):
         response = sync(access_token)
@@ -290,9 +265,11 @@ class Messaging:
 
             room_messages = self.retrieve_messages(user.access_token, room.id)
 
-            if room_messages != room.messages:
-                print('\n'.join(msg for msg in room_messages), end='\n\n')
-                print('\n'.join(msg for msg in room.messages))
+            # if room_messages != room.messages:
+            #     print('actual:')
+            #     print('\n'.join(str(msg) for msg in room_messages), end='\n\n')
+            #     print('expected:')
+            #     print('\n'.join(str(msg) for msg in room.messages))
 
             assert room_messages == room.messages
 
@@ -311,7 +288,13 @@ class Messaging:
 
         event_id = response.json()['event_id']
 
+        # print(room.name, '\nbefore send =======================')
+        # print('\n'.join(str(msg) for msg in room.messages))
+
         room.messages.append(Message(message, event_id, user.username))
+
+        # print('after send =======================')
+        # print('\n'.join(str(msg) for msg in room.messages))
 
         self.txn_id += 1
 
@@ -328,6 +311,12 @@ class Messaging:
 
         assert response.status_code == 200
 
-        del room.messages[msg_idx]
+        # print(room.name, '\nbefore redact =======================')
+        # print('\n'.join(str(msg) for msg in room.messages))
+
+        room.messages.remove(message)
+
+        # print('after redact =======================')
+        # print('\n'.join(str(msg) for msg in room.messages))
 
         self.txn_id += 1

@@ -45,25 +45,15 @@
 					"id": "e2",
 					"name": "e_login",
 					"sourceVertexId": "v1",
-					"targetVertexId": "v2"
-				},
-				{
-					"id": "e3",
-					"name": "e_registered_login",
-					"sourceVertexId": "v1",
-					"targetVertexId": "v2"
+					"targetVertexId": "v2",
+					"guard": "users_logged_in < users_registered"
 				},
 				{
 					"id": "e5",
 					"name": "e_login",
 					"sourceVertexId": "v2",
-					"targetVertexId": "v2"
-				},
-				{
-					"id": "e6",
-					"name": "e_registered_login",
-					"sourceVertexId": "v2",
-					"targetVertexId": "v2"
+					"targetVertexId": "v2",
+					"guard": "users_logged_in < users_registered"
 				},
 				{
 					"id": "e7",
@@ -93,33 +83,22 @@
 					"id": "e11",
 					"name": "e_login",
 					"sourceVertexId": "v3",
-					"targetVertexId": "v2"
+					"targetVertexId": "v2",
+					"guard": "users_logged_in < users_registered"
 				},
 				{
 					"id": "e12",
 					"name": "e_join_room",
 					"sourceVertexId": "v3",
 					"targetVertexId": "v4",
-					"guard": "joinable_rooms > 0"
-				},
-				{
-					"id": "e13",
-					"name": "e_creator_join",
-					"sourceVertexId": "v3",
-					"targetVertexId": "v4"
+					"guard": "possible_joins > 0"
 				},
 				{
 					"id": "e14",
 					"name": "e_join_room",
 					"sourceVertexId": "v4",
 					"targetVertexId": "v4",
-					"guard": "joinable_rooms > 0"
-				},
-				{
-					"id": "e15",
-					"name": "e_creator_join",
-					"sourceVertexId": "v4",
-					"targetVertexId": "v4"
+					"guard": "possible_joins > 0"
 				},
 				{
 					"id": "e16",
@@ -137,7 +116,8 @@
 					"id": "e18",
 					"name": "e_login",
 					"sourceVertexId": "v4",
-					"targetVertexId": "v2"
+					"targetVertexId": "v2",
+					"guard": "users_logged_in < users_registered"
 				}
 			]
 		},
