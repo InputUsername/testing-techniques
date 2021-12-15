@@ -1,4 +1,9 @@
 #!/bin/bash
+
+echo "runtests.sh: Wait for Synapse"
+# Wait untill synapse has fully loaded
+sleep 5
+
 echo "Start first adapter"
 python3 ./adapter/adapter.py 7890 &
 
